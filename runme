@@ -1,0 +1,26 @@
+#!/bin/bash
+#$ -S /bin/bash
+
+# execute from this folder
+#$ -cwd
+
+# long running time
+#$ -l inf
+
+# cpu cores
+# -pe smp 1
+
+# RAM
+#$ -l vf=12G
+
+# gpu number
+#$ -l gpus=1
+
+# gpu type 2001: titan rtx,
+#$ -q 'gpus.q@gpu2001.cs.brown.edu'
+
+# gpu memory
+#$ -l gmem=23
+
+CUDA_VISIBLE_DEVICES=0
+/home/zwang323/miniconda3/envs/imvotenet/bin/python train.py --use_imvotenet --log_dir log_140ep --max_epoch 140 --lr_decay_steps 80,120 --lr_decay_rates 0.1,0.1
