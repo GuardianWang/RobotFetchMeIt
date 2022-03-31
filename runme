@@ -22,5 +22,5 @@
 # gpu memory
 #$ -l gmem=23
 
-CUDA_VISIBLE_DEVICES=0
+# CUDA_VISIBLE_DEVICES=0
 /home/zwang323/miniconda3/envs/imvotenet/bin/python train.py --use_imvotenet --log_dir log_140ep --max_epoch 140 --lr_decay_steps 80,120 --lr_decay_rates 0.1,0.1
