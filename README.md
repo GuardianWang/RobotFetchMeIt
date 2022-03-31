@@ -1,6 +1,9 @@
 # ImVoteNet
 **Boosting 3D Object Detection in Point Clouds with Image Votes**
 
+**Note:**
+The modified instruction is to match the environment of CS department at Brown University.
+
 <p align="center">
   <img src="http://xinleic.xyz/images/imvote.png" width="600" />
 </p>
@@ -18,6 +21,9 @@ This repository contains the code release of the [paper](https://arxiv.org/abs/2
 ## Installation
 Overall, the installation is similar to [VoteNet](https://github.com/facebookresearch/votenet). GPU is required. The code is tested with Ubuntu 18.04, Python 3.7.7, PyTorch 1.4.0, CUDA 10.0 and cuDNN v7.4.
 
+Before installing Pytorch, make sure the machine has GPU on it. Check by `nvidia-smi`. 
+When I ssh to the department machine, `cslab` machines has 2 GB GPU. 
+We need GPU to compile PointNet++.
 First install [PyTorch](https://pytorch.org/get-started/locally/), for example through [Anaconda](https://docs.anaconda.com/anaconda/install/):
 ```bash
 conda install pytorch==1.4.0 torchvision==0.5.0 cudatoolkit=10.0 cudnn=7.6.4 -c pytorch
@@ -36,10 +42,14 @@ Now we are ready to clone this repository:
 git clone git@github.com:facebookresearch/imvotenet.git
 cd imvotenet
 ```
-The code depends on [PointNet++](http://arxiv.org/abs/1706.02413) as a backbone, which needs compilation:
+The code depends on [PointNet++](http://arxiv.org/abs/1706.02413) as a backbone, which needs compilation.
+To train the model on [grid](https://cs.brown.edu/about/system/services/hpc/gridengine/), 
+we need to compile by the [arch](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) of GPU we want to use 
+([grid GPU list](https://cs.brown.edu/about/system/services/hpc/grid/)).
+For example, if I want to use Titan RTX under `gpu2001`, arch is 7.5.
 ```bash
 cd pointnet2
-python setup.py install
+TORCH_CUDA_ARCH_LIST="7.5" python setup.py install
 cd ..
 ```
 
