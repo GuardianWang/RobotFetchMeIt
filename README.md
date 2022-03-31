@@ -20,7 +20,7 @@ Overall, the installation is similar to [VoteNet](https://github.com/facebookres
 
 First install [PyTorch](https://pytorch.org/get-started/locally/), for example through [Anaconda](https://docs.anaconda.com/anaconda/install/):
 ```bash
-conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
+conda install pytorch==1.4.0 torchvision==0.5.0 cudatoolkit=10.0 cudnn=7.6.4 -c pytorch
 ```
 Next, install Python dependencies via `pip` ([tensorboardX](https://github.com/lanpa/tensorboardX) is used for for visualizations):
 ```bash
