@@ -54,7 +54,14 @@ cd ..
 ```
 
 ## Data
-Please follow the steps listed [here](https://github.com/facebookresearch/votenet/blob/master/sunrgbd/README.md) to set up the SUN RGB-D dataset in the `sunrgbd` folder. The expected dataset structure under `sunrgbd` is:
+Please follow the steps listed [here](https://github.com/facebookresearch/votenet/blob/master/sunrgbd/README.md) to set up the SUN RGB-D dataset in the `sunrgbd` folder. 
+To prevent a bug in MATLAB, we need to 
+change line 10 in `OFFICIAL_SUNRGBD/SUNRGBDtoolbox/readData/read_3d_pts_general.m` to
+```
+rgb = double(im) / 255;
+```
+
+The expected dataset structure under `sunrgbd` is:
 ```
 sunrgbd/
   sunrgbd_pc_bbox_votes_50k_{v1,v2}_{train,val}/
