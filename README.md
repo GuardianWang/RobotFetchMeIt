@@ -27,6 +27,10 @@ Next, install Python dependencies via `pip` ([tensorboardX](https://github.com/l
 pip install matplotlib opencv-python plyfile tqdm networkx==2.2 trimesh==2.35.39
 pip install tensorboardX --no-deps
 ```
+Also install `protobuf`
+```
+pip install protobuf
+```
 Now we are ready to clone this repository:
 ```bash
 git clone git@github.com:facebookresearch/imvotenet.git
