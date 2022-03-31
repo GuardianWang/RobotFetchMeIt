@@ -74,6 +74,12 @@ For ImVoteNet, we provide 2D detection results from a pre-trained Faster R-CNN d
 
 ## Training and Evaluation
 
+To submit a task in grid, cd into `imvotenet` and run 
+```
+psub runme
+```
+Note that the GPU we specify matches the arch when compiling PointNet++.
+
 Once the code and data are set up, one can train ImVoteNet by the following command:
 ```bash
 CUDA_VISIBLE_DEVICES=0 python train.py --use_imvotenet --log_dir log_imvotenet
