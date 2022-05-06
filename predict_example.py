@@ -278,7 +278,7 @@ def get_3d_bbox(bboxes_3d):
 def viz_result():
     pcd = get_pcd(to_np=False)
     confident_nms_obbs, classes = parse_result()
-    print("class: ", classes[0])
+    print("class: ", classes)
     bboxes = get_3d_bbox(confident_nms_obbs)
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=[0, 0, 0])
     o3d.visualization.draw_geometries([pcd, mesh_frame, *bboxes], lookat=[0, 0, -1], up=[0, 1, 0], front=[0, 0, 1], zoom=1)
@@ -296,6 +296,6 @@ def make_prediction(dump=False):
 
 
 if __name__ == "__main__":
-    make_prediction(dump=True)
-    #viz_result()
+    # make_prediction(dump=True)
+    viz_result()
     pass
