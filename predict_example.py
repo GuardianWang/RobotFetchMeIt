@@ -274,7 +274,7 @@ def viz_result():
     o3d.visualization.draw_geometries([pcd, mesh_frame, *bboxes], lookat=[0, 0, -1], up=[0, 1, 0], front=[0, 0, 1], zoom=1)
 
 
-def make_prediction():
+def make_prediction(dump=False):
     print("try to get point cloud")
     pcd = torch.tensor(get_model_input(), dtype=torch.float32).to(device)
     print("got point cloud")
@@ -282,10 +282,11 @@ def make_prediction():
     net = get_model().to(device)
     print("got network")
     print("try to predict")
-    predict(net, pcd)
-    print("finish")
+    return predict(net, pcd, dump=dump)
 
 
 if __name__ == "__main__":
-    viz_result()
+    make_prediction()
+	
+    #viz_result()
     pass
