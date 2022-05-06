@@ -5,3 +5,6 @@
 /pointnet2
 __pycache__
 log
+/run_predict
+/grid*
+/pred_votenet
