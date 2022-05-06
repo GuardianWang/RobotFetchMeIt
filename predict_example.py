@@ -64,7 +64,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 num_input_channel = int(FLAGS.use_color)*3 + int(not FLAGS.no_height)*1
 
 DATASET_CONFIG = SunrgbdDatasetConfig()
-MODEL = importlib.import_module('votenet')
+try:
+    MODEL = importlib.import_module('votenet')
+except Exception as e:
+    print("model not imported")
 
 # Used for AP calculation
 CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.use_3d_nms, 'nms_iou': FLAGS.nms_iou,
@@ -184,10 +187,62 @@ def predict(net, pcd):
         else:
             end_points[k] = np.array(v, dtype=object)
     np.savez("pred.npz", **end_points)
-    
+
+
+def softmax(x):
+    ''' Numpy function for softmax'''
+    shape = x.shape
+    probs = np.exp(x - np.max(x, axis=len(shape)-1, keepdims=True))
+    probs /= np.sum(probs, axis=len(shape)-1, keepdims=True)
+    return probs
+
+
+def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
+    # dump_helper.py
+    # INPUT
+
+    # NETWORK OUTPUTS
+    objectness_scores = end_points[key_prefix+'objectness_scores'] if already_numpy else end_points[key_prefix+'objectness_scores'].detach().cpu().numpy() # (B,K,2)
+    pred_center = end_points[key_prefix+'center'] if already_numpy else end_points[key_prefix+'center'].detach().cpu().numpy() # (B,K,3)
+    pred_heading_class = torch.argmax(torch.tensor(end_points[key_prefix+'heading_scores']), -1) if already_numpy else torch.argmax(end_points[key_prefix+'heading_scores'], -1) # B,num_proposal
+    pred_heading_residual = torch.gather(torch.tensor(end_points[key_prefix+'heading_residuals']), 2, pred_heading_class.unsqueeze(-1)) if already_numpy else torch.gather(end_points[key_prefix+'heading_residuals'], 2, pred_heading_class.unsqueeze(-1)) # B,num_proposal,1
+    pred_heading_class = pred_heading_class if already_numpy else pred_heading_class.detach().cpu().numpy() # B,num_proposal
+    pred_heading_residual = pred_heading_residual.squeeze(2).numpy() if already_numpy else pred_heading_residual.squeeze(2).detach().cpu().numpy() # B,num_proposal
+    pred_size_class = torch.argmax(torch.tensor(end_points[key_prefix+'size_scores']), -1) if already_numpy else torch.argmax(end_points[key_prefix+'size_scores'], -1) # B,num_proposal
+    pred_size_residual = torch.gather(torch.tensor(end_points[key_prefix+'size_residuals']), 2, pred_size_class.unsqueeze(-1).unsqueeze(-1).repeat(1,1,1,3)) if already_numpy else torch.gather(end_points[key_prefix+'size_residuals'], 2, pred_size_class.unsqueeze(-1).unsqueeze(-1).repeat(1,1,1,3)) # B,num_proposal,1,3
+    pred_size_residual = pred_size_residual.squeeze(2).numpy() if already_numpy else pred_size_residual.squeeze(2).detach().cpu().numpy() # B,num_proposal,3
+
+    pred_mask = end_points[key_prefix+'pred_mask']  # B,num_proposal
+    i = 0
+    objectness_prob = softmax(objectness_scores[i, :, :])[:, 1]  # (K,)
+
+    DUMP_CONF_THRESH = 0.5  # Dump boxes with obj prob larger than that.
+
+    # Dump predicted bounding boxes
+    if np.sum(objectness_prob > DUMP_CONF_THRESH) > 0:
+        num_proposal = pred_center.shape[1]
+        obbs = []
+        classes = []
+        for j in range(num_proposal):
+            obb = config.param2obb(pred_center[i, j, 0:3], pred_heading_class[i, j], pred_heading_residual[i, j],
+                                   pred_size_class[i, j], pred_size_residual[i, j])
+            # pred_size_class[i, j] is class
+            # config.class2type[int(pred_size_class[i, j])] is class string
+            classes.append(int(pred_size_class[i, j]))
+            obbs.append(obb)
+        if len(obbs) > 0:
+            obbs = np.vstack(tuple(obbs))  # (num_proposal, 7)
+            selected = np.logical_and(objectness_prob > DUMP_CONF_THRESH, pred_mask[i, :] == 1)
+            confident_nms_obbs = obbs[selected]
+            classes = list(map(lambda x: config.class2type[x], np.array(classes)[selected]))
+
+            return confident_nms_obbs, classes
+    return [], []
+
 
 def parse_result():
     res = dict(np.load("pred.npz", allow_pickle=True))
+    confident_nms_obbs, classes = get_pred_bbox(res, DATASET_CONFIG, key_prefix=KEY_PREFIX_LIST[-1], already_numpy=True)
 
 
 def make_prediction():
