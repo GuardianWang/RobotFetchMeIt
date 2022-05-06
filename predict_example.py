@@ -1,6 +1,67 @@
 import open3d as o3d
 import numpy as np
 import math
+import torch
+import os
+import sys
+import argparse
+import importlib
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
+sys.path.append(os.path.join(ROOT_DIR, 'models'))
+sys.path.append(os.path.join(ROOT_DIR, 'sunrgbd'))
+from model_util_sunrgbd import SunrgbdDatasetConfig
+
+parser = argparse.ArgumentParser()
+# ImVoteNet related options
+parser.add_argument('--use_imvotenet', action='store_true', help='Use ImVoteNet (instead of VoteNet) with RGB.')
+parser.add_argument('--max_imvote_per_pixel', type=int, default=3, help='Maximum number of image votes per pixel [default: 3]')
+# Shared options with VoteNet
+parser.add_argument('--checkpoint_path', default=None, help='Model checkpoint path [default: None]')
+parser.add_argument('--dump_dir', default=None, help='Dump dir to save sample outputs [default: None]')
+parser.add_argument('--num_point', type=int, default=20000, help='Point Number [default: 20000]')
+parser.add_argument('--num_target', type=int, default=256, help='Point Number [default: 256]')
+parser.add_argument('--batch_size', type=int, default=8, help='Batch Size during training [default: 8]')
+parser.add_argument('--vote_factor', type=int, default=1, help='Number of votes generated from each seed [default: 1]')
+parser.add_argument('--cluster_sampling', default='vote_fps', help='Sampling strategy for vote clusters: vote_fps, seed_fps, random [default: vote_fps]')
+parser.add_argument('--ap_iou_thresholds', default='0.25,0.5', help='A list of AP IoU thresholds [default: 0.25,0.5]')
+parser.add_argument('--no_height', action='store_true', help='Do NOT use height signal in input.')
+parser.add_argument('--use_color', action='store_true', help='Use RGB color in input.')
+parser.add_argument('--use_sunrgbd_v2', action='store_true', help='Use SUN RGB-D V2 box labels.')
+parser.add_argument('--use_3d_nms', action='store_true', help='Use 3D NMS instead of 2D NMS.')
+parser.add_argument('--use_cls_nms', action='store_true', help='Use per class NMS.')
+parser.add_argument('--use_old_type_nms', action='store_true', help='Use old type of NMS, IoBox2Area.')
+parser.add_argument('--per_class_proposal', action='store_true', help='Duplicate each proposal num_class times.')
+parser.add_argument('--nms_iou', type=float, default=0.25, help='NMS IoU threshold. [default: 0.25]')
+parser.add_argument('--conf_thresh', type=float, default=0.05, help='Filter out predictions with obj prob less than it. [default: 0.05]')
+parser.add_argument('--faster_eval', action='store_true', help='Faster evaluation by skippling empty bounding box removal.')
+parser.add_argument('--shuffle_dataset', action='store_true', help='Shuffle the dataset (random order).')
+FLAGS = parser.parse_args()
+
+if FLAGS.use_cls_nms:
+    assert FLAGS.use_3d_nms
+
+# ------------------------------------------------------------------------- GLOBAL CONFIG BEG
+BATCH_SIZE = FLAGS.batch_size
+NUM_POINT = FLAGS.num_point
+DUMP_DIR = FLAGS.dump_dir
+CHECKPOINT_PATH = FLAGS.checkpoint_path
+assert(CHECKPOINT_PATH is not None)
+FLAGS.DUMP_DIR = DUMP_DIR
+AP_IOU_THRESHOLDS = [float(x) for x in FLAGS.ap_iou_thresholds.split(',')]
+if FLAGS.use_imvotenet:
+    KEY_PREFIX_LIST = ['pc_img_']
+    TOWER_WEIGHTS = {'pc_img_weight': 1.0}
+else:
+    KEY_PREFIX_LIST = ['pc_only_']
+    TOWER_WEIGHTS = {'pc_only_weight': 1.0}
+
+
+# Init the model and optimzier
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+num_input_channel = int(FLAGS.use_color)*3 + int(not FLAGS.no_height)*1
 
 
 USE_HEIGHT = True
