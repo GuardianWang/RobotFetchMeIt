@@ -168,8 +168,10 @@ def predict(net, pcd):
     inputs = {'point_clouds': pcd}
     with torch.no_grad():
         end_points = net(inputs)
-
-    MODEL.dump_results(end_points, DUMP_DIR, DATASET_CONFIG, key_prefix=KEY_PREFIX_LIST[-1])
+    for k, v in end_points.items():
+        end_points[k] = v.detach().cpu().numpy()
+    np.savez("pred.npz", **end_points)
+    
 
 
 if __name__ == "__main__":
