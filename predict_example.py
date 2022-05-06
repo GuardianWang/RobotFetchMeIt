@@ -172,13 +172,17 @@ def get_model():
     return net
 
 
-def predict(net, pcd):
+def predict(net, pcd, dump=False):
     net.eval()  # set model to eval mode (for bn and dp)
     inputs = {'point_clouds': pcd}
     with torch.no_grad():
         end_points = net(inputs)
     end_points.update(inputs)
     parse_predictions(end_points, CONFIG_DICT, KEY_PREFIX_LIST[0])
+
+    if not dump:
+        return get_pred_bbox(end_points, DATASET_CONFIG, key_prefix=KEY_PREFIX_LIST[-1], already_numpy=False)
+
     MODEL.dump_results(end_points, DUMP_DIR, DATASET_CONFIG, inference_switch=True, key_prefix=KEY_PREFIX_LIST[-1])
     
     for k, v in end_points.items():
@@ -187,6 +191,7 @@ def predict(net, pcd):
         else:
             end_points[k] = np.array(v, dtype=object)
     np.savez("pred.npz", **end_points)
+    return parse_result()
 
 
 def softmax(x):
@@ -243,6 +248,30 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
 def parse_result():
     res = dict(np.load("pred.npz", allow_pickle=True))
     confident_nms_obbs, classes = get_pred_bbox(res, DATASET_CONFIG, key_prefix=KEY_PREFIX_LIST[-1], already_numpy=True)
+    return confident_nms_obbs, classes
+
+
+def get_3d_bbox(bboxes_3d):
+    o3d_bboxes = []
+    for bbox_3d in bboxes_3d:
+        # https://github.com/isl-org/Open3D/issues/2
+        # text viz
+        # rotation is from x to -y
+        rot_euler = np.array([0, 0, math.radians(-bbox_3d[6])])
+        rot_mat = o3d.geometry.get_rotation_matrix_from_xyz(rot_euler)
+        o3d_bbox = o3d.geometry.OrientedBoundingBox(center=bbox_3d[:3], R=rot_mat, extent=2 * bbox_3d[3:6])
+        o3d_bboxes.append(o3d_bbox)
+
+    return o3d_bboxes
+
+
+def viz_result():
+    pcd = get_pcd(to_np=False)
+    confident_nms_obbs, classes = parse_result()
+    print("class: ", classes[0])
+    bboxes = get_3d_bbox(confident_nms_obbs)
+    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=[0, 0, 0])
+    o3d.visualization.draw_geometries([pcd, mesh_frame, *bboxes], lookat=[0, 0, -1], up=[0, 1, 0], front=[0, 0, 1], zoom=1)
 
 
 def make_prediction():
@@ -258,6 +287,5 @@ def make_prediction():
 
 
 if __name__ == "__main__":
-    # make_prediction()
-    parse_result()
+    viz_result()
     pass
