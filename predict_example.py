@@ -87,7 +87,7 @@ def get_depth():
 def get_pcd(from_pcd=True, to_np=True):
     if from_pcd:
         sample_id = 1
-        depth_path = os.path.join("sunrgbd", "sunrgbd_pc_bbox_votes_50k_v1_val/{:06d}_pc.npz".format(sample_id))
+        depth_path = os.path.join("sunrgbd-toy", "sunrgbd_pc_bbox_votes_50k_v1_val/{:06d}_pc.npz".format(sample_id))
         points = np.load(depth_path)['pc'][:, :3]
         if to_np:
             return points
