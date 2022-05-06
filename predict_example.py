@@ -13,6 +13,7 @@ ROOT_DIR = BASE_DIR
 sys.path.append(os.path.join(ROOT_DIR, 'models'))
 sys.path.append(os.path.join(ROOT_DIR, 'sunrgbd'))
 from model_util_sunrgbd import SunrgbdDatasetConfig
+from ap_helper import parse_predictions
 
 parser = argparse.ArgumentParser()
 # ImVoteNet related options
@@ -64,6 +65,11 @@ num_input_channel = int(FLAGS.use_color)*3 + int(not FLAGS.no_height)*1
 
 DATASET_CONFIG = SunrgbdDatasetConfig()
 MODEL = importlib.import_module('votenet')
+
+# Used for AP calculation
+CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.use_3d_nms, 'nms_iou': FLAGS.nms_iou,
+               'use_old_type_nms': FLAGS.use_old_type_nms, 'cls_nms': FLAGS.use_cls_nms, 'per_class_proposal': FLAGS.per_class_proposal,
+               'conf_thresh': FLAGS.conf_thresh, 'dataset_config':DATASET_CONFIG}
 
 USE_HEIGHT = True
 NUM_POINTS = 20_000
@@ -168,10 +174,14 @@ def predict(net, pcd):
     inputs = {'point_clouds': pcd}
     with torch.no_grad():
         end_points = net(inputs)
+    parse_predictions(end_points, CONFIG_DICT, KEY_PREFIX_LIST[0])
     for k, v in end_points.items():
         end_points[k] = v.detach().cpu().numpy()
     np.savez("pred.npz", **end_points)
     
+
+def parse_result():
+    res = dict(np.load("pred.npz"))
 
 
 if __name__ == "__main__":
