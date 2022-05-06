@@ -63,6 +63,8 @@ else:
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 num_input_channel = int(FLAGS.use_color)*3 + int(not FLAGS.no_height)*1
 
+DATASET_CONFIG = SunrgbdDatasetConfig()
+MODEL = importlib.import_module('votenet')
 
 USE_HEIGHT = True
 NUM_POINTS = 20_000
@@ -146,8 +148,6 @@ def viz_model_input():
 
 
 def get_model():
-    DATASET_CONFIG = SunrgbdDatasetConfig()
-    MODEL = importlib.import_module('votenet')
     net = MODEL.VoteNet(num_class=DATASET_CONFIG.num_class,
                         num_heading_bin=DATASET_CONFIG.num_heading_bin,
                         num_size_cluster=DATASET_CONFIG.num_size_cluster,
@@ -164,6 +164,17 @@ def get_model():
     return net
 
 
+def predict(net, pcd):
+    net.eval()  # set model to eval mode (for bn and dp)
+    inputs = {'point_clouds': pcd}
+    with torch.no_grad():
+        end_points = net(inputs)
+
+    MODEL.dump_results(end_points, DUMP_DIR, DATASET_CONFIG, key_prefix=KEY_PREFIX_LIST[-1])
+
+
 if __name__ == "__main__":
-    viz_model_input()
+    pcd = torch.from_numpy(get_pcd()).to(device)
+    net = get_model().to(device)
+    predict(net, pcd)
     pass
