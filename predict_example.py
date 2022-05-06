@@ -84,11 +84,12 @@ def get_depth():
     return depth
 
 
-def get_pcd(to_np=True):
+def get_pcd(from_pcd=True, to_np=True):
+    
     depth = get_depth()
     height, width, *_ = np.asarray(depth).shape
     # TODO
-    fov_y = 45  # top to bottom
+    fov_y = 60  # top to bottom
     fx = fy = 0.5 * height / math.tan(math.radians(fov_y * 0.5))
     cx, cy = width / 2, height / 2
     intrinsic = o3d.camera.PinholeCameraIntrinsic(width, height, fx, fy, cx, cy)
