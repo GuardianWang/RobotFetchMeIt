@@ -187,10 +187,10 @@ def predict(net, pcd):
     
 
 def parse_result():
-    res = dict(np.load("pred.npz"))
+    res = dict(np.load("pred.npz", allow_pickle=True))
 
 
-if __name__ == "__main__":
+def make_prediction():
     print("try to get point cloud")
     pcd = torch.tensor(get_model_input(), dtype=torch.float32).to(device)
     print("got point cloud")
@@ -200,4 +200,9 @@ if __name__ == "__main__":
     print("try to predict")
     predict(net, pcd)
     print("finish")
+
+
+if __name__ == "__main__":
+    # make_prediction()
+    parse_result()
     pass
