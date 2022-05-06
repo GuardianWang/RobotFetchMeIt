@@ -174,6 +174,7 @@ def predict(net, pcd):
     inputs = {'point_clouds': pcd}
     with torch.no_grad():
         end_points = net(inputs)
+    end_points.update(inputs)
     parse_predictions(end_points, CONFIG_DICT, KEY_PREFIX_LIST[0])
     for k, v in end_points.items():
         end_points[k] = v.detach().cpu().numpy()
