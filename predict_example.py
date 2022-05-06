@@ -296,7 +296,6 @@ def make_prediction(dump=False):
 
 
 if __name__ == "__main__":
-    make_prediction()
-	
+    make_prediction(dump=True)
     #viz_result()
     pass
