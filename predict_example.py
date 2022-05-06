@@ -127,7 +127,7 @@ def get_model_input():
     if USE_HEIGHT:
         pcd = height_preprocess(pcd)
     pcd = random_sampling(pcd, NUM_POINTS)
-    return pcd
+    return pcd[None, ...]
 
 
 def viz_pcd(pcd):
@@ -174,7 +174,7 @@ def predict(net, pcd):
 
 if __name__ == "__main__":
     print("try to get point cloud")
-    pcd = torch.from_numpy(get_pcd()).to(device)
+    pcd = torch.tensor(get_model_input(), dtype=torch.float32).to(device)
     print("got point cloud")
     print("try to get network")
     net = get_model().to(device)
