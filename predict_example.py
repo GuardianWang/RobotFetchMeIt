@@ -176,8 +176,13 @@ def predict(net, pcd):
         end_points = net(inputs)
     end_points.update(inputs)
     parse_predictions(end_points, CONFIG_DICT, KEY_PREFIX_LIST[0])
+    MODEL.dump_results(end_points, DUMP_DIR, DATASET_CONFIG, inference_switch=True, key_prefix=KEY_PREFIX_LIST[-1])
+    
     for k, v in end_points.items():
-        end_points[k] = v.detach().cpu().numpy()
+        if isinstance(v, torch.Tensor):
+            end_points[k] = v.detach().cpu().numpy()
+        else:
+            end_points[k] = np.array(v, dtype=object)
     np.savez("pred.npz", **end_points)
     
 
