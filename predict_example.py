@@ -48,7 +48,6 @@ BATCH_SIZE = FLAGS.batch_size
 NUM_POINT = FLAGS.num_point
 DUMP_DIR = FLAGS.dump_dir
 CHECKPOINT_PATH = FLAGS.checkpoint_path
-assert(CHECKPOINT_PATH is not None)
 FLAGS.DUMP_DIR = DUMP_DIR
 AP_IOU_THRESHOLDS = [float(x) for x in FLAGS.ap_iou_thresholds.split(',')]
 if FLAGS.use_imvotenet:
@@ -174,7 +173,13 @@ def predict(net, pcd):
 
 
 if __name__ == "__main__":
+    print("try to get point cloud")
     pcd = torch.from_numpy(get_pcd()).to(device)
+    print("got point cloud")
+    print("try to get network")
     net = get_model().to(device)
+    print("got network")
+    print("try to predict")
     predict(net, pcd)
+    print("finish")
     pass
