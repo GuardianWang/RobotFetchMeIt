@@ -1,1 +1,7 @@
 *.egg-info/
+/sunrgbd/sunrgbd_2d*
+/sunrgbd/sunrgbd_pc*
+/sunrgbd/sunrgbd_trainval
+/pointnet2
+__pycache__
+log

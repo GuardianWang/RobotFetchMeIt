@@ -109,7 +109,7 @@ if FLAGS.use_imvotenet:
 
 else:
     MODEL = importlib.import_module('votenet')
-    net = Detector(num_class=DATASET_CONFIG.num_class,
+    net = MODEL.VoteNet(num_class=DATASET_CONFIG.num_class,
                    num_heading_bin=DATASET_CONFIG.num_heading_bin,
                    num_size_cluster=DATASET_CONFIG.num_size_cluster,
                    mean_size_arr=DATASET_CONFIG.mean_size_arr,
