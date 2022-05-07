@@ -76,12 +76,14 @@ CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.
 
 USE_HEIGHT = True
 NUM_POINTS = 20_000
-BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][0]
+BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][1]
+FRONT_TRUNC = 0.0
+DUMP_CONF_THRESH = 0.5  # Dump boxes with obj prob larger than that.
 
 
 def get_depth():
     # unit: mm
-    depth_path = "chairs/frontright_depth_small_chair.png"
+    depth_path = "chairs/frontleft_depth_small.png"
     depth = o3d.io.read_image(depth_path)
     return depth
 
@@ -106,10 +108,14 @@ def get_pcd(from_pcd=False, to_np=True):
     intrinsic = o3d.camera.PinholeCameraIntrinsic(width, height, fx, fy, cx, cy)
     pcd = o3d.geometry.PointCloud.create_from_depth_image(
         depth,
-        depth_trunc=1000,
         intrinsic=intrinsic,
-        extrinsic=np.eye(4).astype(np.float32)
+        extrinsic=np.eye(4).astype(np.float32),
+        depth_scale=1000,
+        depth_trunc=4,
     )
+    pcd_pts = np.asarray(pcd.points)
+    pcd_pts = pcd_pts[pcd_pts[:, -1] > FRONT_TRUNC]
+    pcd.points = o3d.utility.Vector3dVector(pcd_pts)
     pcd.transform([[1, 0, 0, 0],
                    [0, -1, 0, 0],
                    [0, 0, -1, 0],
@@ -234,8 +240,6 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
     i = 0
     objectness_prob = softmax(objectness_scores[i, :, :])[:, 1]  # (K,)
 
-    DUMP_CONF_THRESH = 0.5  # Dump boxes with obj prob larger than that.
-
     # Dump predicted bounding boxes
     if np.sum(objectness_prob > DUMP_CONF_THRESH) > 0:
         num_proposal = pred_center.shape[1]
@@ -261,6 +265,7 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
                 selected = np.logical_and(objectness_prob > DUMP_CONF_THRESH, pred_mask[i, :] == 1)
             obbs = obbs[selected]
             classes = list(map(lambda x: config.class2type[x], np.array(classes)[selected]))
+            print("centers: ", [x[:3] for x in obbs])
 
             return obbs, classes
     print("no detection bbox")
