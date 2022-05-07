@@ -76,6 +76,7 @@ CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.
 
 USE_HEIGHT = True
 NUM_POINTS = 20_000
+BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][0]
 
 
 def get_depth():
@@ -105,7 +106,7 @@ def get_pcd(from_pcd=False, to_np=True):
     intrinsic = o3d.camera.PinholeCameraIntrinsic(width, height, fx, fy, cx, cy)
     pcd = o3d.geometry.PointCloud.create_from_depth_image(
         depth,
-        depth_trunc=3000,
+        depth_trunc=1000,
         intrinsic=intrinsic,
         extrinsic=np.eye(4).astype(np.float32)
     )
@@ -249,11 +250,19 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
             obbs.append(obb)
         if len(obbs) > 0:
             obbs = np.vstack(tuple(obbs))  # (num_proposal, 7)
-            selected = np.logical_and(objectness_prob > DUMP_CONF_THRESH, pred_mask[i, :] == 1)
-            confident_nms_obbs = obbs[selected]
+            selected = None
+            if BBOX_RESULT == "all":
+                selected = np.arange(obbs.shape[0])
+            elif BBOX_RESULT == "confident":
+                selected = objectness_prob > DUMP_CONF_THRESH
+            elif BBOX_RESULT == "nms":
+                selected = pred_mask[i, :] == 1
+            elif BBOX_RESULT == "confident_nms":
+                selected = np.logical_and(objectness_prob > DUMP_CONF_THRESH, pred_mask[i, :] == 1)
+            obbs = obbs[selected]
             classes = list(map(lambda x: config.class2type[x], np.array(classes)[selected]))
 
-            return confident_nms_obbs, classes
+            return obbs, classes
     return [], []
 
 
