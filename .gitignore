@@ -8,3 +8,4 @@ log
 /run_predict
 /grid*
 /pred_votenet
+/chairs
