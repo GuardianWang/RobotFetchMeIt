@@ -80,11 +80,12 @@ NUM_POINTS = 20_000
 
 def get_depth():
     # unit: mm
-    depth = o3d.io.read_image("sample-image/depth.png")
+    depth_path = "chairs/frontright_depth_small_chair.png"
+    depth = o3d.io.read_image(depth_path)
     return depth
 
 
-def get_pcd(from_pcd=True, to_np=True):
+def get_pcd(from_pcd=False, to_np=True):
     if from_pcd:
         sample_id = 1
         depth_path = os.path.join("sunrgbd-toy", "sunrgbd_pc_bbox_votes_50k_v1_val/{:06d}_pc.npz".format(sample_id))
@@ -104,6 +105,7 @@ def get_pcd(from_pcd=True, to_np=True):
     intrinsic = o3d.camera.PinholeCameraIntrinsic(width, height, fx, fy, cx, cy)
     pcd = o3d.geometry.PointCloud.create_from_depth_image(
         depth,
+        depth_trunc=3000,
         intrinsic=intrinsic,
         extrinsic=np.eye(4).astype(np.float32)
     )
@@ -296,6 +298,6 @@ def make_prediction(dump=False):
 
 
 if __name__ == "__main__":
-    # make_prediction(dump=True)
+    make_prediction(dump=True)
     viz_result()
     pass
