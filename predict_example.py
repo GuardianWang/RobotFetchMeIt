@@ -263,6 +263,7 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
             classes = list(map(lambda x: config.class2type[x], np.array(classes)[selected]))
 
             return obbs, classes
+    print("no detection bbox")
     return [], []
 
 
