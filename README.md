@@ -25,6 +25,8 @@ Before installing Pytorch, make sure the machine has GPU on it. Check by `nvidia
 When I ssh to the department machine, `cslab` machines has 2 GB GPU. 
 We need GPU to compile PointNet++.
 First install [PyTorch](https://pytorch.org/get-started/locally/), for example through [Anaconda](https://docs.anaconda.com/anaconda/install/):
+Find cudatoolkit and cudnn version match [here](https://developer.nvidia.com/rdp/cudnn-archive).
+Find how to let nvcc detect a specific cuda version [here](https://stackoverflow.com/questions/40517083/multiple-cuda-versions-on-machine-nvcc-v-confusion).
 ```bash
 conda install pytorch==1.4.0 torchvision==0.5.0 cudatoolkit=10.0 cudnn=7.6.4 -c pytorch
 ```
