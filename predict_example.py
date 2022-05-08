@@ -80,6 +80,8 @@ BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][1]
 FRONT_TRUNC = 0.1
 DUMP_CONF_THRESH = 0.5  # Dump boxes with obj prob larger than that.
 
+FRONT_CAM_ANGLE = 15
+
 
 def get_depth():
     # unit: mm
@@ -122,7 +124,7 @@ def get_pcd(from_pcd=False, to_np=True):
                    [0, 0, 0, 1]])
 
     # to sunrgbd, rotate along x
-    rot_euler = np.array([math.radians(90), 0, 0])
+    rot_euler = np.array([math.radians(90 - FRONT_CAM_ANGLE), 0, 0])
     rot_mat = o3d.geometry.get_rotation_matrix_from_xyz(rot_euler)
     pcd.rotate(rot_mat, (0, 0, 0))
 
