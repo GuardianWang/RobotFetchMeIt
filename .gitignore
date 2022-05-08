@@ -10,3 +10,4 @@ log
 /pred_votenet
 .idea
 /chairs
+/pred.npz
