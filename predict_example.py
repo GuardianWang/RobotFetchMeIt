@@ -76,9 +76,11 @@ CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.
 
 USE_HEIGHT = True
 NUM_POINTS = 20_000
-BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][3]
+BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][1]
 FRONT_TRUNC = 0.1
-DUMP_CONF_THRESH = 0.55  # Dump boxes with obj prob larger than that.
+DUMP_CONF_THRESH = 0.50  # Dump boxes with obj prob larger than that.
+GROUND_PERCENTILE = 20
+GROUND_BIAS = 0.15
 
 FRONT_CAM_ANGLE = 15
 
@@ -90,7 +92,7 @@ def get_depth():
     return depth
 
 
-def get_pcd(from_pcd=False, to_np=True):
+def get_pcd(from_pcd=False, to_np=True, remove_ground=False):
     if from_pcd:
         sample_id = 1
         depth_path = os.path.join("sunrgbd-toy", "sunrgbd_pc_bbox_votes_50k_v1_val/{:06d}_pc.npz".format(sample_id))
@@ -115,6 +117,7 @@ def get_pcd(from_pcd=False, to_np=True):
         depth_scale=1000,
         depth_trunc=4,
     )
+    # camera tilt
     pcd_pts = np.asarray(pcd.points)
     pcd_pts = pcd_pts[pcd_pts[:, -1] > FRONT_TRUNC]
     pcd.points = o3d.utility.Vector3dVector(pcd_pts)
@@ -127,6 +130,13 @@ def get_pcd(from_pcd=False, to_np=True):
     rot_euler = np.array([math.radians(90 - FRONT_CAM_ANGLE), 0, 0])
     rot_mat = o3d.geometry.get_rotation_matrix_from_xyz(rot_euler)
     pcd.rotate(rot_mat, (0, 0, 0))
+
+    # remove ground
+    if remove_ground:
+        pcd_pts = np.asarray(pcd.points)
+        ground_z = np.percentile(pcd_pts[:, -1], GROUND_PERCENTILE)
+        pcd_pts = pcd_pts[pcd_pts[:, -1] > ground_z + GROUND_BIAS]
+        pcd.points = o3d.utility.Vector3dVector(pcd_pts)
 
     return np.asarray(pcd.points) if to_np else pcd
 
@@ -315,7 +325,7 @@ def make_prediction(dump=False):
 
 
 if __name__ == "__main__":
-    # make_prediction(dump=True)
+    make_prediction(dump=True)
     viz_result()
     # viz_full_pcd()
     pass
