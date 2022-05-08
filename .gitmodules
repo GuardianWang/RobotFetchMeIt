@@ -4,3 +4,6 @@
 [submodule "spot-sdk"]
 	path = spot-sdk
 	url = https://github.com/jasonxyliu/spot-sdk.git
+[submodule "TextCondRobotFetch"]
+	path = TextCondRobotFetch
+	url = https://github.com/FreddieRao/TextCondRobotFetch.git
