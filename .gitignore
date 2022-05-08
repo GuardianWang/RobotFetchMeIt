@@ -11,3 +11,4 @@ log
 .idea
 /chairs
 /pred.npz
+/*.ply
