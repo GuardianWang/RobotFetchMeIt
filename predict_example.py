@@ -76,18 +76,18 @@ CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.
 
 USE_HEIGHT = True
 NUM_POINTS = 20_000
-BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][1]
+BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][3]
 FRONT_TRUNC = 0.1
 DUMP_CONF_THRESH = 0.50  # Dump boxes with obj prob larger than that.
-GROUND_PERCENTILE = 20
-GROUND_BIAS = 0.15
+GROUND_PERCENTILE = 10
+GROUND_BIAS = 0.03
 
 FRONT_CAM_ANGLE = 15
 
 
 def get_depth():
     # unit: mm
-    depth_path = "chairs/right_depth_many.png"
+    depth_path = "chairs/right_depth_red.png"
     depth = o3d.io.read_image(depth_path)
     return depth
 
@@ -304,8 +304,8 @@ def get_3d_bbox(bboxes_3d):
     return o3d_bboxes
 
 
-def viz_result():
-    pcd = get_pcd(to_np=False)
+def viz_result(remove_ground=True):
+    pcd = get_pcd(to_np=False, remove_ground=remove_ground)
     confident_nms_obbs, classes = parse_result()
     print("class: ", classes)
     bboxes = get_3d_bbox(confident_nms_obbs)
@@ -325,7 +325,7 @@ def make_prediction(dump=False):
 
 
 if __name__ == "__main__":
-    make_prediction(dump=True)
+    # make_prediction(dump=True)
     viz_result()
     # viz_full_pcd()
     pass
