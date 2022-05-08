@@ -77,13 +77,13 @@ CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.
 USE_HEIGHT = True
 NUM_POINTS = 20_000
 BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][1]
-FRONT_TRUNC = 0.0
+FRONT_TRUNC = 0.1
 DUMP_CONF_THRESH = 0.5  # Dump boxes with obj prob larger than that.
 
 
 def get_depth():
     # unit: mm
-    depth_path = "chairs/frontleft_depth_small.png"
+    depth_path = "chairs/frontleft_depth_small_far.png"
     depth = o3d.io.read_image(depth_path)
     return depth
 
@@ -313,6 +313,6 @@ def make_prediction(dump=False):
 
 
 if __name__ == "__main__":
-    make_prediction(dump=True)
+    # make_prediction(dump=True)
     viz_result()
     pass
