@@ -287,20 +287,20 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
             print("radius: ", [x[3: 6] for x in obbs])
             print("confidence: ", objectness_prob)
 
-            return obbs, classes
+            return obbs, classes, objectness_prob
     print("no detection bbox")
-    return [], []
+    return [], [], []
 
 
 def parse_result(result_path="pred.npz"):
     res = dict(np.load(result_path, allow_pickle=True))
-    confident_nms_obbs, classes = get_pred_bbox(res, DATASET_CONFIG, key_prefix=KEY_PREFIX_LIST[-1], already_numpy=True)
-    return confident_nms_obbs, classes
+    confident_nms_obbs, classes, objectness_prob = get_pred_bbox(res, DATASET_CONFIG, key_prefix=KEY_PREFIX_LIST[-1], already_numpy=True)
+    return confident_nms_obbs, classes, objectness_prob
 
 
-def get_3d_bbox(bboxes_3d):
+def get_3d_bbox(bboxes_3d, top_k=1):
     o3d_bboxes = []
-    for bbox_3d in bboxes_3d:
+    for bbox_3d in bboxes_3d[:top_k]:
         # https://github.com/isl-org/Open3D/issues/2
         # text viz
         # rotation is from x to -y
@@ -312,11 +312,11 @@ def get_3d_bbox(bboxes_3d):
     return o3d_bboxes
 
 
-def viz_result(remove_ground=True):
+def viz_result(remove_ground=True, top_k=1):
     pcd = get_pcd(to_np=False, remove_ground=remove_ground)
-    confident_nms_obbs, classes = parse_result()
+    confident_nms_obbs, classes, objectness_prob = parse_result()
     print("class: ", classes)
-    bboxes = get_3d_bbox(confident_nms_obbs)
+    bboxes = get_3d_bbox(confident_nms_obbs, top_k=top_k)
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=[0, 0, 0])
     o3d.visualization.draw_geometries([pcd, mesh_frame, *bboxes], lookat=[0, 0, -1], up=[0, 1, 0], front=[0, 0, 1], zoom=1)
 
@@ -350,11 +350,12 @@ def crop_result():
     cls = classes[0]
     bbox = get_3d_bbox(confident_nms_obbs)[0]
     pcd = crop_object(pcd, bbox, cls + ".ply")
+    return pcd
 
 
 if __name__ == "__main__":
     make_prediction(dump=True)
-    viz_result()
+    viz_result(top_k=1)
     # viz_full_pcd()
     # crop_result()
     pass
