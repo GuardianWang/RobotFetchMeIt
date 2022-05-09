@@ -76,7 +76,7 @@ CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.
 
 USE_HEIGHT = True
 NUM_POINTS = 20_000
-BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][3]
+BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][1]
 FRONT_TRUNC = 0.1
 DUMP_CONF_THRESH = 0.50  # Dump boxes with obj prob larger than that.
 GROUND_PERCENTILE = 10
@@ -87,7 +87,7 @@ FRONT_CAM_ANGLE = 15
 
 def get_depth():
     # unit: mm
-    depth_path = "chairs/right_depth_red.png"
+    depth_path = "chairs/right_depth_gray.png"
     depth = o3d.io.read_image(depth_path)
     return depth
 
@@ -278,14 +278,15 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
             obbs = obbs[selected]
             classes = list(map(lambda x: config.class2type[x], np.array(classes)[selected]))
             print("centers: ", [x[:3] for x in obbs])
+            print("radius: ", [x[3: 6] for x in obbs])
 
             return obbs, classes
     print("no detection bbox")
     return [], []
 
 
-def parse_result():
-    res = dict(np.load("pred.npz", allow_pickle=True))
+def parse_result(result_path="pred.npz"):
+    res = dict(np.load(result_path, allow_pickle=True))
     confident_nms_obbs, classes = get_pred_bbox(res, DATASET_CONFIG, key_prefix=KEY_PREFIX_LIST[-1], already_numpy=True)
     return confident_nms_obbs, classes
 
@@ -324,8 +325,29 @@ def make_prediction(dump=False):
     return predict(net, pcd, dump=dump)
 
 
+def crop_object(pcd, bbox, path="crop.ply"):
+    print("crop ", path)
+    pcd = o3d.geometry.PointCloud.crop(pcd, bbox)
+    o3d.io.write_point_cloud(path, pcd, write_ascii=True, print_progress=True)
+    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=[0, 0, 0])
+    o3d.visualization.draw_geometries([pcd, mesh_frame, bbox], lookat=[0, 0, -1], up=[0, 1, 0], front=[0, 0, 1], zoom=1)
+    return pcd
+
+
+def crop_result():
+    pcd = get_pcd(to_np=False, remove_ground=True)
+    confident_nms_obbs, classes = parse_result()
+    if not classes:
+        print("no result")
+        return
+    cls = classes[0]
+    bbox = get_3d_bbox(confident_nms_obbs)[0]
+    pcd = crop_object(pcd, bbox, cls + ".ply")
+
+
 if __name__ == "__main__":
-    # make_prediction(dump=True)
+    make_prediction(dump=True)
     viz_result()
     # viz_full_pcd()
+    # crop_result()
     pass
