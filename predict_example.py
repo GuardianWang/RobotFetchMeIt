@@ -249,7 +249,7 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
     pred_size_residual = pred_size_residual.squeeze(2).numpy() if already_numpy else pred_size_residual.squeeze(2).detach().cpu().numpy() # B,num_proposal,3
 
     pred_mask = end_points[key_prefix+'pred_mask']  # B,num_proposal
-    i = 0
+    i = 0  # batch
     objectness_prob = softmax(objectness_scores[i, :, :])[:, 1]  # (K,)
 
     # Dump predicted bounding boxes
@@ -265,7 +265,12 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
             classes.append(int(pred_size_class[i, j]))
             obbs.append(obb)
         if len(obbs) > 0:
+            argidx = np.argsort(objectness_prob)[::-1]
+            objectness_prob = objectness_prob[argidx]
             obbs = np.vstack(tuple(obbs))  # (num_proposal, 7)
+            obbs = obbs[argidx]
+            classes = np.array(classes)[argidx]
+
             selected = None
             if BBOX_RESULT == "all":
                 selected = np.arange(obbs.shape[0])
@@ -276,9 +281,11 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
             elif BBOX_RESULT == "confident_nms":
                 selected = np.logical_and(objectness_prob > DUMP_CONF_THRESH, pred_mask[i, :] == 1)
             obbs = obbs[selected]
-            classes = list(map(lambda x: config.class2type[x], np.array(classes)[selected]))
+            objectness_prob = objectness_prob[selected]
+            classes = list(map(lambda x: config.class2type[x], classes[selected]))
             print("centers: ", [x[:3] for x in obbs])
             print("radius: ", [x[3: 6] for x in obbs])
+            print("confidence: ", objectness_prob)
 
             return obbs, classes
     print("no detection bbox")
@@ -347,7 +354,7 @@ def crop_result():
 
 if __name__ == "__main__":
     make_prediction(dump=True)
-    # viz_result()
+    viz_result()
     # viz_full_pcd()
-    crop_result()
+    # crop_result()
     pass
