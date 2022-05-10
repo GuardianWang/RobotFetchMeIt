@@ -494,6 +494,20 @@ def init_image_capture(config):
     return image_client
 
 
+def init_state_client(config):
+    sdk = bosdyn.client.create_standard_sdk('RobotStateClient')
+    robot = sdk.create_robot(config.hostname)
+    robot.authenticate(username=config.username, password=config.password)
+    robot_state_client = robot.ensure_client(RobotStateClient.default_service_name)
+    return robot_state_client
+
+
+def get_state(robot_state_client):
+    state = robot_state_client.get_robot_state()
+
+    return state
+
+
 def pixel_format_string_to_enum(enum_string):
     return dict(image_pb2.Image.PixelFormat.items()).get(enum_string)
 
@@ -553,6 +567,7 @@ def detect_and_go(wait_for_result=True):
     net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
     image_client = init_image_capture(FLAGS)
+    robot_state_client = init_state_client(FLAGS)
     with bosdyn.client.lease.LeaseKeepAlive(lease_client, must_acquire=True, return_at_exit=True):
         # init pos
         robot.logger.info("Robot is starting")
@@ -561,6 +576,7 @@ def detect_and_go(wait_for_result=True):
                    pos_vision, rot_vision, is_start=True, is_end=False, rotate_before_move=True)
         # detect
         while True:
+            state = get_state(robot_state_client)
             _, img_path = capture_robot_image(image_client, show_img=True)
             confident_nms_obbs, classes, objectness_prob = make_prediction(net=net, depth_img=img_path, dump=False)
             if len(classes) == 0:
