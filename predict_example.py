@@ -105,12 +105,12 @@ CONFIG_DICT = {'remove_empty_box': (not FLAGS.faster_eval), 'use_3d_nms': FLAGS.
 USE_HEIGHT = True
 NUM_POINTS = 20_000
 BBOX_RESULT = ["all", "confident", "nms", "confident_nms"][3]
-FRONT_TRUNC = 0.22
+FRONT_TRUNC = 0.1
 DUMP_CONF_THRESH = 0.50  # Dump boxes with obj prob larger than that.
-GROUND_PERCENTILE = 1
-GROUND_BIAS = 0.032
+GROUND_PERCENTILE = 10
+GROUND_BIAS = 0.03
 
-FRONT_CAM_ANGLE = 50
+FRONT_CAM_ANGLE = 15
 
 # robot image
 ROTATION_ANGLE = {
@@ -128,8 +128,8 @@ ROTATION_ANGLE = {
 def get_depth(depth_img=None):
     # unit: mm
     if depth_img is None:
-        depth_img = "chairs/hand_depth_wooden_no_leg.png"
-        # depth_img = "robot_image/right_depth.png"
+        # depth_img = "chairs/right_depth_black.png"
+        depth_img = "robot_image/right_depth.png"
     depth = o3d.io.read_image(depth_img)
     return depth
 
@@ -159,7 +159,7 @@ def get_pcd(src="depth", to_np=True, remove_ground=False, depth_img=None):
         intrinsic=intrinsic,
         extrinsic=np.eye(4).astype(np.float32),
         depth_scale=1000,
-        depth_trunc=0.3,
+        depth_trunc=4,
     )
     # camera tilt
     pcd_pts = np.asarray(pcd.points)
@@ -388,17 +388,12 @@ def crop_object(pcd, bbox, path="crop.ply"):
 
 def crop_result():
     pcd = get_pcd(to_np=False, remove_ground=True)
-    # confident_nms_obbs, classes, objectness_prob = parse_result()
-    # if not classes:
-    #     print("no result")
-    #     return
-    # cls = classes[0]
-    # bbox = get_3d_bbox(confident_nms_obbs, top_k=5)[0]
-
-    rot_euler = np.array([0, 0, 0])
-    rot_mat = o3d.geometry.get_rotation_matrix_from_xyz(rot_euler)
-    bbox = o3d.geometry.OrientedBoundingBox(center=[0.05, 0.4, -0.2], R=rot_mat, extent=[1, 3, 3])
-    cls = "chair"
+    confident_nms_obbs, classes, objectness_prob = parse_result()
+    if not classes:
+        print("no result")
+        return
+    cls = classes[0]
+    bbox = get_3d_bbox(confident_nms_obbs)[0]
     pcd = crop_object(pcd, bbox, cls + ".ply")
     return pcd
 
@@ -590,8 +585,8 @@ def detect_and_go(wait_for_result=True):
 
 if __name__ == "__main__":
     # make_prediction(dump=True)
-    # viz_result(remove_ground=True, top_k=8)
+    # viz_result(top_k=2)
     # viz_full_pcd()
-    crop_result()
+    # crop_result()
     # detect_and_go()
     pass
