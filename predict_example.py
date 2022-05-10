@@ -344,12 +344,13 @@ def viz_result(remove_ground=True, top_k=1):
     o3d.visualization.draw_geometries([pcd, mesh_frame, *bboxes], lookat=[0, 0, -1], up=[0, 1, 0], front=[0, 0, 1], zoom=1)
 
 
-def make_prediction(dump=False):
+def make_prediction(net=None, dump=False):
     print("try to get point cloud")
     pcd = torch.tensor(get_model_input(), dtype=torch.float32).to(device)
     print("got point cloud")
     print("try to get network")
-    net = get_model().to(device)
+    if net is None:
+        net = get_model().to(device)
     print("got network")
     print("try to predict")
     return predict(net, pcd, dump=dump)
@@ -377,7 +378,7 @@ def crop_result():
 
 
 def move_robot(robot, robot_state_client, robot_command_client, config,
-               pos_vision, rot_vision, is_start=True, is_end=True):
+               pos_vision, rot_vision, is_start=True, is_end=True, rotate_before_move=False):
     # Power on
     if not robot.is_powered_on():
         robot.logger.info("Powering on robot... This may take several seconds.")
@@ -404,19 +405,27 @@ def move_robot(robot, robot_state_client, robot_command_client, config,
     # Initialize a robot command message, which we will build out below
     command = robot_command_pb2.RobotCommand()
 
+    time_full = config.time_per_move
+    if rotate_before_move:
+        point = command.synchronized_command.mobility_command.se2_trajectory_request.trajectory.points.add()
+        point.pose.position.x, point.pose.position.y = pos_vision[0], pos_vision[1]  # only x, y
+        point.pose.angle = 0
+        point.time_since_reference.CopyFrom(seconds_to_duration(time_full))
+        time_full += config.time_per_move
+
     point = command.synchronized_command.mobility_command.se2_trajectory_request.trajectory.points.add()
     point.pose.position.x, point.pose.position.y = pos_vision[0], pos_vision[1]  # only x, y
     point.pose.angle = yaw_angle(rot_vision)
-    point.time_since_reference.CopyFrom(seconds_to_duration(config.time_per_move))
+    point.time_since_reference.CopyFrom(seconds_to_duration(time_full))
 
     command.synchronized_command.mobility_command.se2_trajectory_request.se2_frame_name = VISION_FRAME_NAME
-    time_full = config.time_per_move
     robot.logger.info("Send body trajectory command.")
     cmd_id = robot_command_client.robot_command(command, end_time_secs=time.time() + time_full)
+    time.sleep(time_full + 2)
     block_for_trajectory_cmd(command_client=robot_command_client, cmd_id=cmd_id,
                              body_movement_statuses={
                                  basic_command_pb2.SE2TrajectoryCommand.Feedback.BODY_STATUS_SETTLED},
-                             timeout_sec=time_full + 2,
+                             timeout_sec=2,
                              logger=robot.logger)
 
     if is_end:
@@ -454,21 +463,22 @@ def init_robot(config):
 
 
 def detect_and_go():
+    net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
     with bosdyn.client.lease.LeaseKeepAlive(lease_client, must_acquire=True, return_at_exit=True):
         # init pos
         robot.logger.info("Robot is starting")
-        pos_vision, rot_vision = (3, 0, 0), (0, 0, 90)
+        pos_vision, rot_vision = (2, 0, 0), (0, 0, 90)
         move_robot(robot, robot_state_client, robot_command_client, FLAGS,
                    pos_vision, rot_vision, is_start=True, is_end=False)
         # detect
-        confident_nms_obbs, classes, objectness_prob = make_prediction(dump=True)
+        confident_nms_obbs, classes, objectness_prob = make_prediction(net=net, dump=False)
         if len(classes) == 0:
             print("no detection")
         else:
             pos_vision, rot_vision = (4, 0, 0), (0, 0, 90)
             move_robot(robot, robot_state_client, robot_command_client, FLAGS,
-                       pos_vision, rot_vision, is_start=False, is_end=False)
+                       pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
 
         # end
         robot.logger.info("Robot is going back")
