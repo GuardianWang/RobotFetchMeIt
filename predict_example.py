@@ -504,8 +504,13 @@ def init_state_client(config):
 
 def get_state(robot_state_client):
     state = robot_state_client.get_robot_state()
+    # arm_and_mobility_command.py
+    # floor is z=-0.15
+    # lowest stand z=0.14
+    # highest stand z=0.36
+    vision_t_world = get_vision_tform_body(state.kinematic_state.transforms_snapshot)
 
-    return state
+    return vision_t_world
 
 
 def pixel_format_string_to_enum(enum_string):
