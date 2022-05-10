@@ -558,7 +558,7 @@ def detect_and_go(wait_for_result=True):
         robot.logger.info("Robot is starting")
         pos_vision, rot_vision = (3, 0, 0), (0, 0, 90)
         move_robot(robot, robot_state_client, robot_command_client, FLAGS,
-                   pos_vision, rot_vision, is_start=True, is_end=False)
+                   pos_vision, rot_vision, is_start=True, is_end=False, rotate_before_move=True)
         # detect
         while True:
             _, img_path = capture_robot_image(image_client, show_img=True)
