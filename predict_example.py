@@ -60,9 +60,7 @@ parser.add_argument('--shuffle_dataset', action='store_true', help='Shuffle the 
 parser.add_argument("--username", type=str, default="user", help="Username of Spot")
 parser.add_argument("--password", type=str, default="97qp5bwpwf2c", help="Password of Spot")  # dungnydsc8su
 parser.add_argument("--dock_id", type=int, default="521", help="Docking station ID to dock at")
-parser.add_argument("---grid_x", type=int, default=1, help="X coordinate of grid cell to move robot base to")
-parser.add_argument("--grid_y", type=int, default=0, help="Y coordinate of grid cell to move robot base to")
-parser.add_argument("--time_per_move", type=int, default=25, help="Seconds each move in grid should take")
+parser.add_argument("--time_per_move", type=int, default=10, help="Seconds each move in grid should take")
 FLAGS = parser.parse_args()
 bosdyn.client.util.setup_logging(FLAGS.verbose)
 
@@ -378,21 +376,24 @@ def crop_result():
     return pcd
 
 
-def move_robot(robot, robot_state_client, robot_command_client, lease_client, config,
-               pos_vision, rot_vision):
-    with bosdyn.client.lease.LeaseKeepAlive(lease_client, must_acquire=True, return_at_exit=True):
-        # Power on
-        if not robot.is_powered_on():
-            robot.logger.info("Powering on robot... This may take several seconds.")
-            robot.power_on(timeout_sec=20)
-            assert robot.is_powered_on(), "Robot power on failed."
-            robot.logger.info("Robot powered on.")
+def move_robot(robot, robot_state_client, robot_command_client, config,
+               pos_vision, rot_vision, is_start=True, is_end=True):
+    # Power on
+    if not robot.is_powered_on():
+        robot.logger.info("Powering on robot... This may take several seconds.")
+        robot.power_on(timeout_sec=20)
+        assert robot.is_powered_on(), "Robot power on failed."
+        robot.logger.info("Robot powered on.")
 
+    if is_start:
         # Undock
-        robot.logger.info("Robot undocking...\nCLEAR AREA in front of docking station.")
-        blocking_undock(robot)
-        robot.logger.info("Robot undocked and standing")
-        time.sleep(1)
+        try:
+            robot.logger.info("Robot undocking...\nCLEAR AREA in front of docking station.")
+            blocking_undock(robot)
+            robot.logger.info("Robot undocked and standing")
+            time.sleep(1)
+        except Exception as e:
+            pass
 
         # Stand
         robot.logger.info("Commanding robot to stand...")
@@ -400,20 +401,28 @@ def move_robot(robot, robot_state_client, robot_command_client, lease_client, co
         robot.logger.info("Robot standing.")
         time.sleep(3)
 
-        # Initialize a robot command message, which we will build out below
-        command = robot_command_pb2.RobotCommand()
+    # Initialize a robot command message, which we will build out below
+    command = robot_command_pb2.RobotCommand()
 
-        point = command.synchronized_command.mobility_command.se2_trajectory_request.trajectory.points.add()
-        point.pose.position.x, point.pose.position.y = pos_vision[0], pos_vision[1]  # only x, y
-        point.pose.angle = yaw_angle(rot_vision)
-        point.time_since_reference.CopyFrom(seconds_to_duration(config.time_per_move))
+    point = command.synchronized_command.mobility_command.se2_trajectory_request.trajectory.points.add()
+    point.pose.position.x, point.pose.position.y = pos_vision[0], pos_vision[1]  # only x, y
+    point.pose.angle = yaw_angle(rot_vision)
+    point.time_since_reference.CopyFrom(seconds_to_duration(config.time_per_move))
 
-        command.synchronized_command.mobility_command.se2_trajectory_request.se2_frame_name = VISION_FRAME_NAME
-        time_full = config.time_per_move
-        robot.logger.info("Send body trajectory command.")
-        cmd_id = robot_command_client.robot_command(command, end_time_secs=time.time() + time_full)
-        # TODO: block
-        block_for_trajectory_cmd(robot_command_client, cmd_id)
+    command.synchronized_command.mobility_command.se2_trajectory_request.se2_frame_name = VISION_FRAME_NAME
+    time_full = config.time_per_move
+    robot.logger.info("Send body trajectory command.")
+    cmd_id = robot_command_client.robot_command(command, end_time_secs=time.time() + time_full)
+    block_for_trajectory_cmd(command_client=robot_command_client, cmd_id=cmd_id,
+                             body_movement_statuses={
+                                 basic_command_pb2.SE2TrajectoryCommand.Feedback.BODY_STATUS_SETTLED},
+                             timeout_sec=time_full + 2,
+                             logger=robot.logger)
+
+    if is_end:
+        # Dock robot after mission complete
+        blocking_dock_robot(robot, config.dock_id)
+        robot.logger.info("Robot docked")
 
         robot.power_off(cut_immediately=False, timeout_sec=20)
         assert not robot.is_powered_on(), "Robot power off failed"
@@ -444,9 +453,34 @@ def init_robot(config):
     return robot, robot_state_client, robot_command_client, lease_client
 
 
+def detect_and_go():
+    robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
+    with bosdyn.client.lease.LeaseKeepAlive(lease_client, must_acquire=True, return_at_exit=True):
+        # init pos
+        robot.logger.info("Robot is starting")
+        pos_vision, rot_vision = (3, 0, 0), (0, 0, 90)
+        move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+                   pos_vision, rot_vision, is_start=True, is_end=False)
+        # detect
+        confident_nms_obbs, classes, objectness_prob = make_prediction(dump=True)
+        if len(classes) == 0:
+            print("no detection")
+        else:
+            pos_vision, rot_vision = (4, 0, 0), (0, 0, 90)
+            move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+                       pos_vision, rot_vision, is_start=False, is_end=False)
+
+        # end
+        robot.logger.info("Robot is going back")
+        pos_vision, rot_vision = (2, 0, 0), (0, 0, 0)
+        move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+                   pos_vision, rot_vision, is_start=False, is_end=True)
+
+
 if __name__ == "__main__":
-    make_prediction(dump=True)
-    viz_result(top_k=1)
+    # make_prediction(dump=True)
+    # viz_result(top_k=1)
     # viz_full_pcd()
     # crop_result()
+    detect_and_go()
     pass
