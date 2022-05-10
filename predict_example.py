@@ -568,7 +568,10 @@ def detect_and_go(wait_for_result=True):
                 if wait_for_result:
                     continue
             else:
-                pos_vision, rot_vision = (4, 0, 0), (0, 0, 90)
+                center = confident_nms_obbs[0][:2]
+                # assume camera to body center is 0.25m
+                pos_vision, rot_vision = (3 + center[1] - 1, 0 - center[0] - 0.15, 0), (0, 0, 0)
+                input("move to {}".format(pos_vision))
                 move_robot(robot, robot_state_client, robot_command_client, FLAGS,
                            pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
             break
