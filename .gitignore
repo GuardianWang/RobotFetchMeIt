@@ -12,3 +12,4 @@ log
 /chairs
 /pred.npz
 /*.ply
+/robot_image

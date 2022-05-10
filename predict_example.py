@@ -7,6 +7,8 @@ import sys
 import argparse
 import importlib
 import time
+import cv2
+from scipy import ndimage
 
 import bosdyn.client
 import bosdyn.client.util
@@ -18,7 +20,8 @@ from bosdyn.client.robot_state import RobotStateClient
 from bosdyn.client.frame_helpers import VISION_FRAME_NAME, get_vision_tform_body, get_a_tform_b
 from bosdyn.client.docking import blocking_undock, blocking_dock_robot
 from bosdyn.client import math_helpers
-from bosdyn.api import robot_command_pb2, basic_command_pb2
+from bosdyn.client.image import ImageClient, build_image_request
+from bosdyn.api import robot_command_pb2, basic_command_pb2, image_pb2
 from bosdyn.api import geometry_pb2
 from bosdyn.api.geometry_pb2 import SE2VelocityLimit, SE2Velocity, Vec2
 from bosdyn.api.spot import robot_command_pb2 as spot_command_pd2
@@ -61,6 +64,8 @@ parser.add_argument("--username", type=str, default="user", help="Username of Sp
 parser.add_argument("--password", type=str, default="97qp5bwpwf2c", help="Password of Spot")  # dungnydsc8su
 parser.add_argument("--dock_id", type=int, default="521", help="Docking station ID to dock at")
 parser.add_argument("--time_per_move", type=int, default=10, help="Seconds each move in grid should take")
+parser.add_argument('--image-service', help='Name of the image service to query.',
+                    default=ImageClient.default_service_name)
 FLAGS = parser.parse_args()
 bosdyn.client.util.setup_logging(FLAGS.verbose)
 
@@ -107,16 +112,29 @@ GROUND_BIAS = 0.03
 
 FRONT_CAM_ANGLE = 15
 
+# robot image
+ROTATION_ANGLE = {
+    'hand_color_image': 0,
+    'hand_depth': -90,
+    'back_fisheye_image': 0,
+    'frontleft_fisheye_image': -78,
+    'frontright_fisheye_image': -102,
+    'left_fisheye_image': 0,
+    'right_fisheye_image': 180,
+    'right_depth': 180
+}
 
-def get_depth():
+
+def get_depth(depth_img=None):
     # unit: mm
-    depth_path = "chairs/right_depth_black.png"
-    depth = o3d.io.read_image(depth_path)
+    if depth_img is None:
+        depth_img = "chairs/right_depth_black.png"
+    depth = o3d.io.read_image(depth_img)
     return depth
 
 
-def get_pcd(from_pcd=False, to_np=True, remove_ground=False):
-    if from_pcd:
+def get_pcd(src="depth", to_np=True, remove_ground=False, depth_img=None):
+    if src == "pcd":
         sample_id = 1
         depth_path = os.path.join("sunrgbd-toy", "sunrgbd_pc_bbox_votes_50k_v1_val/{:06d}_pc.npz".format(sample_id))
         points = np.load(depth_path)['pc'][:, :3]
@@ -126,7 +144,9 @@ def get_pcd(from_pcd=False, to_np=True, remove_ground=False):
         pcd.points = o3d.utility.Vector3dVector(points)
         return pcd
 
-    depth = get_depth()
+    depth = []
+    if src == "depth":
+        depth = get_depth(depth_img=depth_img)
     height, width, *_ = np.asarray(depth).shape
     # TODO
     fov_y = 60  # top to bottom
@@ -185,8 +205,8 @@ def random_sampling(pc, num_sample, replace=None, return_choices=False):
         return pc[choices]
 
 
-def get_model_input():
-    pcd = get_pcd()
+def get_model_input(src="depth", to_np=True, remove_ground=False, depth_img=None):
+    pcd = get_pcd(src=src, to_np=to_np, remove_ground=remove_ground, depth_img=depth_img)
     if USE_HEIGHT:
         pcd = height_preprocess(pcd)
     pcd = random_sampling(pcd, NUM_POINTS)
@@ -344,9 +364,9 @@ def viz_result(remove_ground=True, top_k=1):
     o3d.visualization.draw_geometries([pcd, mesh_frame, *bboxes], lookat=[0, 0, -1], up=[0, 1, 0], front=[0, 0, 1], zoom=1)
 
 
-def make_prediction(net=None, dump=False):
+def make_prediction(net=None, depth_img=None, dump=False):
     print("try to get point cloud")
-    pcd = torch.tensor(get_model_input(), dtype=torch.float32).to(device)
+    pcd = torch.tensor(get_model_input(depth_img=depth_img), dtype=torch.float32).to(device)
     print("got point cloud")
     print("try to get network")
     if net is None:
@@ -462,29 +482,95 @@ def init_robot(config):
     return robot, robot_state_client, robot_command_client, lease_client
 
 
+def init_image_capture(config):
+    sdk = bosdyn.client.create_standard_sdk('image_capture')
+    robot = sdk.create_robot(config.hostname)
+    robot.authenticate(username=config.username, password=config.password)
+    robot.sync_with_directory()
+    robot.time_sync.wait_for_sync()
+
+    image_client = robot.ensure_client(config.image_service)
+    return image_client
+
+
+def pixel_format_string_to_enum(enum_string):
+    return dict(image_pb2.Image.PixelFormat.items()).get(enum_string)
+
+
+def capture_robot_image(image_client, pixel_fotmat="PIXEL_FORMAT_DEPTH_U16", image_source="right_depth",
+                        image_saved_folder="robot_image", show_img=False):
+    pixel_format = pixel_format_string_to_enum(pixel_fotmat)
+    image_request = [
+        build_image_request(image_source, pixel_format=pixel_format)
+    ]
+    image_responses = image_client.get_image(image_request)
+    image = image_responses[0]
+    num_bytes = 1  # Assume a default of 1 byte encodings.
+    if image.shot.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_DEPTH_U16:
+        dtype = np.uint16
+        extension = ".png"
+    else:
+        if image.shot.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_RGB_U8:
+            num_bytes = 3
+        elif image.shot.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_RGBA_U8:
+            num_bytes = 4
+        elif image.shot.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_GREYSCALE_U8:
+            num_bytes = 1
+        elif image.shot.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_GREYSCALE_U16:
+            num_bytes = 2
+        dtype = np.uint8
+        extension = ".jpg"
+
+    img = np.frombuffer(image.shot.image.data, dtype=dtype)
+    if image.shot.image.format == image_pb2.Image.FORMAT_RAW:
+        try:
+            # Attempt to reshape array into a RGB rows X cols shape.
+            img = img.reshape((image.shot.image.rows, image.shot.image.cols, num_bytes))
+        except ValueError:
+            # Unable to reshape the image data, trying a regular decode.
+            img = cv2.imdecode(img, -1)
+    else:
+        img = cv2.imdecode(img, -1)
+
+    # auto rotate
+    img = ndimage.rotate(img, ROTATION_ANGLE[image.source.name])
+
+    if not os.path.exists(image_saved_folder):
+        os.mkdir(image_saved_folder)
+    image_saved_path = os.path.join(image_saved_folder, image_source + extension)
+    cv2.imwrite(image_saved_path, img)
+    if show_img:
+        cv2.imshow(image_source, img)
+        cv2.waitKey()
+
+    return img, image_saved_path
+
+
 def detect_and_go():
     net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
+    image_client = init_image_capture(FLAGS)
     with bosdyn.client.lease.LeaseKeepAlive(lease_client, must_acquire=True, return_at_exit=True):
         # init pos
         robot.logger.info("Robot is starting")
         pos_vision, rot_vision = (2, 0, 0), (0, 0, 90)
-        move_robot(robot, robot_state_client, robot_command_client, FLAGS,
-                   pos_vision, rot_vision, is_start=True, is_end=False)
+        # move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+        #            pos_vision, rot_vision, is_start=True, is_end=False)
         # detect
-        confident_nms_obbs, classes, objectness_prob = make_prediction(net=net, dump=False)
+        _, img_path = capture_robot_image(image_client, show_img=True)
+        confident_nms_obbs, classes, objectness_prob = make_prediction(net=net, depth_img=img_path, dump=False)
         if len(classes) == 0:
             print("no detection")
         else:
             pos_vision, rot_vision = (4, 0, 0), (0, 0, 90)
-            move_robot(robot, robot_state_client, robot_command_client, FLAGS,
-                       pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
+            # move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+            #            pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
 
         # end
         robot.logger.info("Robot is going back")
         pos_vision, rot_vision = (2, 0, 0), (0, 0, 0)
-        move_robot(robot, robot_state_client, robot_command_client, FLAGS,
-                   pos_vision, rot_vision, is_start=False, is_end=True)
+        # move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+        #            pos_vision, rot_vision, is_start=False, is_end=True)
 
 
 if __name__ == "__main__":
