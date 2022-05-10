@@ -6,7 +6,23 @@ import os
 import sys
 import argparse
 import importlib
+import time
 
+import bosdyn.client
+import bosdyn.client.util
+import bosdyn.client.lease
+from bosdyn.client import create_standard_sdk
+from bosdyn.client.robot_command import RobotCommandClient, blocking_stand, RobotCommandBuilder, block_until_arm_arrives, \
+    block_for_trajectory_cmd
+from bosdyn.client.robot_state import RobotStateClient
+from bosdyn.client.frame_helpers import VISION_FRAME_NAME, get_vision_tform_body, get_a_tform_b
+from bosdyn.client.docking import blocking_undock, blocking_dock_robot
+from bosdyn.client import math_helpers
+from bosdyn.api import robot_command_pb2, basic_command_pb2
+from bosdyn.api import geometry_pb2
+from bosdyn.api.geometry_pb2 import SE2VelocityLimit, SE2Velocity, Vec2
+from bosdyn.api.spot import robot_command_pb2 as spot_command_pd2
+from bosdyn.util import seconds_to_duration
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
@@ -16,6 +32,7 @@ from model_util_sunrgbd import SunrgbdDatasetConfig
 from ap_helper import parse_predictions
 
 parser = argparse.ArgumentParser()
+bosdyn.client.util.add_base_arguments(parser)
 # ImVoteNet related options
 parser.add_argument('--use_imvotenet', action='store_true', help='Use ImVoteNet (instead of VoteNet) with RGB.')
 parser.add_argument('--max_imvote_per_pixel', type=int, default=3, help='Maximum number of image votes per pixel [default: 3]')
@@ -39,7 +56,15 @@ parser.add_argument('--nms_iou', type=float, default=0.25, help='NMS IoU thresho
 parser.add_argument('--conf_thresh', type=float, default=0.05, help='Filter out predictions with obj prob less than it. [default: 0.05]')
 parser.add_argument('--faster_eval', action='store_true', help='Faster evaluation by skippling empty bounding box removal.')
 parser.add_argument('--shuffle_dataset', action='store_true', help='Shuffle the dataset (random order).')
+# robot
+parser.add_argument("--username", type=str, default="user", help="Username of Spot")
+parser.add_argument("--password", type=str, default="97qp5bwpwf2c", help="Password of Spot")  # dungnydsc8su
+parser.add_argument("--dock_id", type=int, default="521", help="Docking station ID to dock at")
+parser.add_argument("---grid_x", type=int, default=1, help="X coordinate of grid cell to move robot base to")
+parser.add_argument("--grid_y", type=int, default=0, help="Y coordinate of grid cell to move robot base to")
+parser.add_argument("--time_per_move", type=int, default=25, help="Seconds each move in grid should take")
 FLAGS = parser.parse_args()
+bosdyn.client.util.setup_logging(FLAGS.verbose)
 
 if FLAGS.use_cls_nms:
     assert FLAGS.use_3d_nms
@@ -351,6 +376,39 @@ def crop_result():
     bbox = get_3d_bbox(confident_nms_obbs)[0]
     pcd = crop_object(pcd, bbox, cls + ".ply")
     return pcd
+
+
+def move_robot(robot, robot_state_client, robot_command_client, lease_client, config):
+    with bosdyn.client.lease.LeaseKeepAlive(lease_client, must_acquire=True, return_at_exit=True):
+        # Power on
+        if not robot.is_powered_on():
+            robot.logger.info("Powering on robot... This may take several seconds.")
+            robot.power_on(timeout_sec=20)
+            assert robot.is_powered_on(), "Robot power on failed."
+            robot.logger.info("Robot powered on.")
+
+        # Undock
+        robot.logger.info("Robot undocking...\nCLEAR AREA in front of docking station.")
+        blocking_undock(robot)
+        robot.logger.info("Robot undocked and standing")
+        time.sleep(1)
+
+
+def init_robot(config):
+    sdk = create_standard_sdk("move_robot_base")
+    robot = sdk.create_robot(config.hostname)
+
+    robot.authenticate(username=config.username, password=config.password)
+    robot.time_sync.wait_for_sync()
+    assert not robot.is_estopped(), "Robot is estopped. Please use an external E-Stop client, " \
+                                    "such as the estop SDK example, to configure E-Stop."
+
+    robot_state_client = robot.ensure_client(RobotStateClient.default_service_name)
+    robot_command_client = robot.ensure_client(RobotCommandClient.default_service_name)
+
+    lease_client = robot.ensure_client(bosdyn.client.lease.LeaseClient.default_service_name)
+
+    return robot, robot_state_client, robot_command_client, lease_client
 
 
 if __name__ == "__main__":
