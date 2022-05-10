@@ -128,7 +128,8 @@ ROTATION_ANGLE = {
 def get_depth(depth_img=None):
     # unit: mm
     if depth_img is None:
-        depth_img = "chairs/right_depth_black.png"
+        # depth_img = "chairs/right_depth_black.png"
+        depth_img = "robot_image/right_depth.png"
     depth = o3d.io.read_image(depth_img)
     return depth
 
@@ -329,6 +330,7 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
             print("centers: ", [x[:3] for x in obbs])
             print("radius: ", [x[3: 6] for x in obbs])
             print("confidence: ", objectness_prob)
+            print("class: ", classes)
 
             return obbs, classes, objectness_prob
     print("no detection bbox")
@@ -358,7 +360,6 @@ def get_3d_bbox(bboxes_3d, top_k=1):
 def viz_result(remove_ground=True, top_k=1):
     pcd = get_pcd(to_np=False, remove_ground=remove_ground)
     confident_nms_obbs, classes, objectness_prob = parse_result()
-    print("class: ", classes)
     bboxes = get_3d_bbox(confident_nms_obbs, top_k=top_k)
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=[0, 0, 0])
     o3d.visualization.draw_geometries([pcd, mesh_frame, *bboxes], lookat=[0, 0, -1], up=[0, 1, 0], front=[0, 0, 1], zoom=1)
@@ -540,43 +541,49 @@ def capture_robot_image(image_client, pixel_fotmat="PIXEL_FORMAT_DEPTH_U16", ima
     image_saved_path = os.path.join(image_saved_folder, image_source + extension)
     cv2.imwrite(image_saved_path, img)
     if show_img:
-        cv2.imshow(image_source, img)
-        cv2.waitKey()
+        window_name = image_source
+        cv2.imshow(window_name, img)
+        cv2.waitKey(0)
+        cv2.destroyWindow(window_name)
 
     return img, image_saved_path
 
 
-def detect_and_go():
+def detect_and_go(wait_for_result=True):
     net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
     image_client = init_image_capture(FLAGS)
     with bosdyn.client.lease.LeaseKeepAlive(lease_client, must_acquire=True, return_at_exit=True):
         # init pos
         robot.logger.info("Robot is starting")
-        pos_vision, rot_vision = (2, 0, 0), (0, 0, 90)
-        # move_robot(robot, robot_state_client, robot_command_client, FLAGS,
-        #            pos_vision, rot_vision, is_start=True, is_end=False)
+        pos_vision, rot_vision = (3, 0, 0), (0, 0, 90)
+        move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+                   pos_vision, rot_vision, is_start=True, is_end=False)
         # detect
-        _, img_path = capture_robot_image(image_client, show_img=True)
-        confident_nms_obbs, classes, objectness_prob = make_prediction(net=net, depth_img=img_path, dump=False)
-        if len(classes) == 0:
-            print("no detection")
-        else:
-            pos_vision, rot_vision = (4, 0, 0), (0, 0, 90)
-            # move_robot(robot, robot_state_client, robot_command_client, FLAGS,
-            #            pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
+        while True:
+            _, img_path = capture_robot_image(image_client, show_img=True)
+            confident_nms_obbs, classes, objectness_prob = make_prediction(net=net, depth_img=img_path, dump=False)
+            if len(classes) == 0:
+                print("no detection")
+                if wait_for_result:
+                    continue
+            else:
+                pos_vision, rot_vision = (4, 0, 0), (0, 0, 90)
+                move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+                           pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
+            break
 
         # end
         robot.logger.info("Robot is going back")
         pos_vision, rot_vision = (2, 0, 0), (0, 0, 0)
-        # move_robot(robot, robot_state_client, robot_command_client, FLAGS,
-        #            pos_vision, rot_vision, is_start=False, is_end=True)
+        move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+                   pos_vision, rot_vision, is_start=False, is_end=True)
 
 
 if __name__ == "__main__":
     # make_prediction(dump=True)
-    # viz_result(top_k=1)
+    # viz_result(top_k=2)
     # viz_full_pcd()
     # crop_result()
-    detect_and_go()
+    # detect_and_go()
     pass
