@@ -368,7 +368,7 @@ def crop_object(pcd, bbox, path="crop.ply"):
 
 def crop_result():
     pcd = get_pcd(to_np=False, remove_ground=True)
-    confident_nms_obbs, classes = parse_result()
+    confident_nms_obbs, classes, objectness_prob = parse_result()
     if not classes:
         print("no result")
         return
