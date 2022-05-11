@@ -111,6 +111,7 @@ GROUND_PERCENTILE = 10
 GROUND_BIAS = 0.03
 
 FRONT_CAM_ANGLE = 15
+BODY_TO_RIGHT_CAM = np.array([-0.15, -0.12, 0.13])
 
 # robot image
 ROTATION_ANGLE = {
@@ -518,10 +519,16 @@ def get_state(robot_state_client):
 
 
 def extract_pos_rotation(state):
-    pos = [state.x, state.y, state.z]
+    body_center_pos = np.array([state.x, state.y, state.z])
+    quaternion = np.array([state.rot.w, state.rot.x, state.rot.y, state.rot.z])
+    rot = o3d.geometry.get_rotation_matrix_from_quaternion(quaternion)
+
+    right_camera_pos = body_center_pos + rot @ BODY_TO_RIGHT_CAM
+    return body_center_pos, rot, right_camera_pos
+
+
     quaternion = [state.rot.w, state.rot.x, state.rot.y, state.rot.z]
     rot = o3d.geometry.get_rotation_matrix_from_quaternion(quaternion)
-    return pos, rot
 
 
 def pixel_format_string_to_enum(enum_string):
