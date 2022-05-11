@@ -527,10 +527,6 @@ def extract_pos_rotation(state):
     return body_center_pos, rot, right_camera_pos
 
 
-    quaternion = [state.rot.w, state.rot.x, state.rot.y, state.rot.z]
-    rot = o3d.geometry.get_rotation_matrix_from_quaternion(quaternion)
-
-
 def pixel_format_string_to_enum(enum_string):
     return dict(image_pb2.Image.PixelFormat.items()).get(enum_string)
 
