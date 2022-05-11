@@ -526,15 +526,27 @@ def get_state(robot_state_client):
 
 
 def sunrgbd2spot(pos):
+    # use right camera of spot
     pos = deepcopy(pos)
-    pos[0], pos[1] = pos[1], -pos[0]
+    pos[0], pos[1] = -pos[0], -pos[1]
     return pos
 
 
 def spot2sunrgbd(pos):
+    # use right camera of spot
     pos = deepcopy(pos)
-    pos[0], pos[1] = -pos[1], pos[0]
+    pos[0], pos[1] = -pos[0], -pos[1]
     return pos
+
+
+def get_spot_world_from_sunrgbd_cam(sunrgbd_pos_cam, state):
+    sunrgbd_pos_cam = np.array(sunrgbd_pos_cam)
+    body_center_pos, rot, right_camera_pos = extract_pos_rotation(state)
+    spot_pos_cam = sunrgbd2spot(sunrgbd_pos_cam)  # point relative to camera in spot camera coordinate
+    world_pos_cam = rot @ spot_pos_cam
+    world_pos = right_camera_pos + world_pos_cam
+
+    return world_pos
 
 
 def extract_pos_rotation(state):
