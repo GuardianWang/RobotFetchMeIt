@@ -112,7 +112,7 @@ GROUND_PERCENTILE = 10
 GROUND_BIAS = 0.03
 
 FRONT_CAM_ANGLE = 15
-BODY_TO_RIGHT_CAM = np.array([-0.15, -0.12, 0.13])
+BODY_TO_RIGHT_CAM = np.array([-0.14, -0.12, 0.13])
 
 # robot image
 ROTATION_ANGLE = {
