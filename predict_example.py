@@ -634,12 +634,25 @@ def detect_and_go(wait_for_result=True):
                 if wait_for_result:
                     continue
             else:
-                center = confident_nms_obbs[0][:2]
-                # assume camera to body center is 0.25m
-                pos_vision, rot_vision = (3 + center[1] - 1, 0 - center[0] - 0.15, 0), (0, 0, 0)
-                input("move to {}".format(pos_vision))
+                center = confident_nms_obbs[0][:3]
+                front_center = center - np.array([0, confident_nms_obbs[0][4] + 0.5, 0])
+                pos_vision = get_spot_world_from_sunrgbd_cam(front_center, state)
+                rot_vision = (0, 0, 0)
+                k = input("move to {}, press y to move, press d to dock, "
+                          "press other keys to make another prediction: ".format(pos_vision))
+                if k == 'y':
+                    move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+                               pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
+                elif k == 'd':
+                    break
+                else:
+                    continue
+            k = input("motion finish, press y to start over, press other keys to dock: ")
+            if k == 'y':
+                pos_vision, rot_vision = (INIT_BODY_X, 0, 0), (0, 0, 90)
                 move_robot(robot, robot_state_client, robot_command_client, FLAGS,
                            pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
+                continue
             break
 
         # end
