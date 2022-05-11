@@ -3,6 +3,7 @@ import numpy as np
 import math
 import torch
 import os
+from copy import deepcopy
 import sys
 import argparse
 import importlib
@@ -516,6 +517,18 @@ def get_state(robot_state_client):
     vision_t_world = get_vision_tform_body(state.kinematic_state.transforms_snapshot)
 
     return vision_t_world
+
+
+def sunrgbd2spot(pos):
+    pos = deepcopy(pos)
+    pos[0], pos[1] = pos[1], -pos[0]
+    return pos
+
+
+def spot2sunrgbd(pos):
+    pos = deepcopy(pos)
+    pos[0], pos[1] = -pos[1], pos[0]
+    return pos
 
 
 def extract_pos_rotation(state):
