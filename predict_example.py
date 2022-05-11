@@ -645,7 +645,7 @@ def detect_and_go(wait_for_result=True):
         # detect
         while True:
             state = get_state(robot_state_client)
-            _, img_path = capture_robot_image(image_client, show_img=True)
+            _, img_path = capture_robot_image(image_client, show_img=False)
             confident_nms_obbs, classes, objectness_prob = make_prediction(net=net, depth_img=img_path, dump=False)
             if len(classes) == 0:
                 print("no detection")
