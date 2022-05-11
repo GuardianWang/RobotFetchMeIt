@@ -502,14 +502,6 @@ def init_image_capture(config):
     return image_client
 
 
-def init_state_client(config):
-    sdk = bosdyn.client.create_standard_sdk('RobotStateClient')
-    robot = sdk.create_robot(config.hostname)
-    robot.authenticate(username=config.username, password=config.password)
-    robot_state_client = robot.ensure_client(RobotStateClient.default_service_name)
-    return robot_state_client
-
-
 def get_state(robot_state_client):
     state = robot_state_client.get_robot_state()
     # arm_and_mobility_command.py
@@ -617,7 +609,6 @@ def detect_and_go(wait_for_result=True):
     net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
     image_client = init_image_capture(FLAGS)
-    robot_state_client = init_state_client(FLAGS)
     with bosdyn.client.lease.LeaseKeepAlive(lease_client, must_acquire=True, return_at_exit=True):
         # init pos
         robot.logger.info("Robot is starting")
