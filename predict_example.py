@@ -113,6 +113,12 @@ GROUND_BIAS = 0.03
 
 FRONT_CAM_ANGLE = 15
 BODY_TO_RIGHT_CAM = np.array([-0.14, -0.12, 0.13])
+# safe region world coordinate
+SAFE_X_MIN = 2
+SAFE_X_MAX = 5
+SAFE_Y_MIN = -1.5
+SAFE_Y_MAX = 1.3
+INIT_BODY_X = 3
 
 # robot image
 ROTATION_ANGLE = {
@@ -161,7 +167,7 @@ def get_pcd(src="depth", to_np=True, remove_ground=False, depth_img=None):
         intrinsic=intrinsic,
         extrinsic=np.eye(4).astype(np.float32),
         depth_scale=1000,
-        depth_trunc=4,
+        depth_trunc=SAFE_X_MAX - INIT_BODY_X + 1,
     )
     # camera tilt
     pcd_pts = np.asarray(pcd.points)
