@@ -605,6 +605,32 @@ def capture_robot_image(image_client, pixel_fotmat="PIXEL_FORMAT_DEPTH_U16", ima
     return img, image_saved_path
 
 
+def bbox_selection_prompt(confident_nms_obbs, classes, objectness_prob, state):
+    n = len(classes)
+    print("showing {} results".format(n))
+    pos_visions = []
+    for i, (obb, cls, prob) in enumerate(zip(confident_nms_obbs, classes, objectness_prob)):
+        center = obb[:3]
+        front_center = center - np.array([0, obb[4] + 0.5, 0])
+        pos_vision = get_spot_world_from_sunrgbd_cam(front_center, state)
+        pos_visions.append(pos_vision)
+        print("No. {}:\n"
+              "class: {}, "
+              "probability: {:.2f}, "
+              "will move to {}".format(i, cls, prob, pos_vision))
+    while True:
+        i = input("choose an index to select the object to move to, "
+                  "or any index if you want to make another prediction: ")
+        if not i.isdigit() or int(i) >= n:
+            print("invalid i")
+            continue
+        else:
+            i = int(i)
+            break
+
+    return pos_visions[i]
+
+
 def detect_and_go(wait_for_result=True):
     net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
@@ -625,9 +651,7 @@ def detect_and_go(wait_for_result=True):
                 if wait_for_result:
                     continue
             else:
-                center = confident_nms_obbs[0][:3]
-                front_center = center - np.array([0, confident_nms_obbs[0][4] + 0.5, 0])
-                pos_vision = get_spot_world_from_sunrgbd_cam(front_center, state)
+                pos_vision = bbox_selection_prompt(confident_nms_obbs, classes, objectness_prob, state)
                 rot_vision = (0, 0, 0)
                 k = input("move to {}, press y to move, press d to dock, "
                           "press other keys to make another prediction: ".format(pos_vision))
