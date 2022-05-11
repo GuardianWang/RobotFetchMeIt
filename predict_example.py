@@ -322,6 +322,7 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
             obbs = np.vstack(tuple(obbs))  # (num_proposal, 7)
             obbs = obbs[argidx]
             classes = np.array(classes)[argidx]
+            pred_mask = pred_mask[i][argidx]
 
             selected = None
             if BBOX_RESULT == "all":
@@ -331,7 +332,7 @@ def get_pred_bbox(end_points, config, key_prefix, already_numpy=True):
             elif BBOX_RESULT == "nms":
                 selected = pred_mask[i, :] == 1
             elif BBOX_RESULT == "confident_nms":
-                selected = np.logical_and(objectness_prob > DUMP_CONF_THRESH, pred_mask[i, :] == 1)
+                selected = np.logical_and(objectness_prob > DUMP_CONF_THRESH, pred_mask == 1)
             obbs = obbs[selected]
             objectness_prob = objectness_prob[selected]
             classes = list(map(lambda x: config.class2type[x], classes[selected]))
