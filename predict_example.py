@@ -508,6 +508,7 @@ def get_state(robot_state_client):
     # floor is z=-0.15
     # lowest stand z=0.14
     # highest stand z=0.36
+    # x, y, z: center of bottom
     # safe region (gray mattress)
     # 2 <= x <= 5
     # -1.5 <= y <= 1.3
