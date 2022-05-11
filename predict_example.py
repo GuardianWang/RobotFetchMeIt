@@ -621,7 +621,7 @@ def detect_and_go(wait_for_result=True):
     with bosdyn.client.lease.LeaseKeepAlive(lease_client, must_acquire=True, return_at_exit=True):
         # init pos
         robot.logger.info("Robot is starting")
-        pos_vision, rot_vision = (3, 0, 0), (0, 0, 90)
+        pos_vision, rot_vision = (INIT_BODY_X, 0, 0), (0, 0, 90)
         move_robot(robot, robot_state_client, robot_command_client, FLAGS,
                    pos_vision, rot_vision, is_start=True, is_end=False, rotate_before_move=True)
         # detect
