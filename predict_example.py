@@ -454,7 +454,7 @@ def move_robot(robot, robot_state_client, robot_command_client, config,
     block_for_trajectory_cmd(command_client=robot_command_client, cmd_id=cmd_id,
                              body_movement_statuses={
                                  basic_command_pb2.SE2TrajectoryCommand.Feedback.BODY_STATUS_SETTLED},
-                             timeout_sec=2,
+                             timeout_sec=1,
                              logger=robot.logger)
 
     if is_end:
