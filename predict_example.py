@@ -7,6 +7,7 @@ from copy import deepcopy
 import sys
 import argparse
 import importlib
+import warnings
 import time
 import cv2
 from scipy import ndimage
@@ -606,6 +607,10 @@ def capture_robot_image(image_client, pixel_fotmat="PIXEL_FORMAT_DEPTH_U16", ima
     return img, image_saved_path
 
 
+def is_safe_position(pos):
+    return SAFE_X_MIN <= pos[0] <= SAFE_X_MAX and SAFE_Y_MIN <= pos[1] <= SAFE_Y_MAX
+
+
 def bbox_selection_prompt(confident_nms_obbs, classes, objectness_prob, state):
     n = len(classes)
     print("showing {} results".format(n))
@@ -615,10 +620,13 @@ def bbox_selection_prompt(confident_nms_obbs, classes, objectness_prob, state):
         front_center = center - np.array([0, obb[4] + 0.5, 0])
         pos_vision = get_spot_world_from_sunrgbd_cam(front_center, state)
         pos_visions.append(pos_vision)
+        is_safe = is_safe_position(pos_vision)
         print("No. {}:\n"
               "class: {}, "
               "probability: {:.2f}, "
               "will move to {}".format(i, cls, prob, pos_vision))
+        if not is_safe:
+            warnings.warn("position not safe")
     while True:
         i = input("choose an index to select the object to move to, "
                   "or any index if you want to make another prediction: ")
