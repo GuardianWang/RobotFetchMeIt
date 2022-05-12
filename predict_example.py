@@ -693,20 +693,28 @@ def detect_and_go(wait_for_result=True):
                 print("no detection")
                 if wait_for_result:
                     continue
+            
             else:
             	 selected_bbox_folder = "selected_bbox_" + get_time_str()
             	 crop_result(confident_nms_obbs=confident_nms_obbs, np_save_folder=selected_bbox_folder)
-                pos_vision = bbox_selection_prompt(confident_nms_obbs, classes, objectness_prob, state)
-                rot_vision = (0, 0, 0)
-                k = input("move to {}, press y to move, press d to dock, "
-                          "press other keys to make another prediction: ".format(pos_vision))
-                if k == 'y':
-                    move_robot(robot, robot_state_client, robot_command_client, FLAGS,
-                               pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
-                elif k == 'd':
-                    break
+            	 selected = wait_shape_result(folder=selected_bbox_folder)
+            	 if not np.any(selected):
+                    print("no match")
+                    if wait_for_result:
+                        continue
                 else:
-                    continue
+                	  classes = [x for i, x in enumerate(classes) if selected[i]]
+                    pos_vision = bbox_selection_prompt(confident_nms_obbs[selected], classes, objectness_prob[selected], state)
+                    rot_vision = (0, 0, 0)
+                    k = input("move to {}, press y to move, press d to dock, "
+                              "press other keys to make another prediction: ".format(pos_vision))
+                    if k == 'y':
+                        move_robot(robot, robot_state_client, robot_command_client, FLAGS,
+                                   pos_vision, rot_vision, is_start=False, is_end=False, rotate_before_move=True)
+                    elif k == 'd':
+                        break
+                    else:
+                        continue
             k = input("motion finish, press y to start over, press other keys to dock: ")
             if k == 'y':
                 pos_vision, rot_vision = (INIT_BODY_X, 0, 0), (0, 0, 90)
