@@ -698,7 +698,7 @@ def detect_and_go(wait_for_result=True, use_text=True):
             
             else:
                 if use_text:
-                    selected_bbox_folder = "selected_bbox_" + get_time_str()
+                    selected_bbox_folder = os.path.join("selected_bbox", get_time_str())
                     print("write folder {} into txt".format(selected_bbox_folder))
                     with open("selected_bbox_folder_path.txt", "w") as f:
                         f.write(selected_bbox_folder)
