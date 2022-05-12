@@ -2,7 +2,9 @@ import os
 import sys
 import argparse
 import time
+import glob
 import numpy as np
+from random import sample
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -39,7 +41,7 @@ def wait_until_can_read(selected_bbox_folder):
     return curr
 
 
-def pred_shape(selected_bbox_folder, model, latent_folder="TextCondRobotFetch/embeddings", latent_fmt="shape_{:04d}.npy",
+def pred_shape(selected_bbox_folder, model, partial_scans, latent_folder="TextCondRobotFetch/embeddings", latent_fmt="shape_{:04d}.npy",
                latent_id=0, result_file="result.txt", npy_fmt="{:03d}.npy"):
     result_file_path = os.path.join(selected_bbox_folder, result_file)
     latent_path = os.path.join(latent_folder, latent_fmt.format(latent_id))
@@ -50,10 +52,17 @@ def pred_shape(selected_bbox_folder, model, latent_folder="TextCondRobotFetch/em
         for i in range(n):
             pcd_path = os.path.join(selected_bbox_folder, npy_fmt.format(i))
             pcd = np.load(pcd_path)
-            res = inference(pcd, latent, model, FLAGS)
+            res = inference(pcd, latent, model, FLAGS, sample(partial_scans, 2))
             preds.append(res)
             f.write('1' if res else '0')
     return preds
+
+
+def get_partial_scans(folder="../subdataset", fmt="**/*_partial.npz"):
+    p = os.path.join(folder, fmt)
+    files = glob.glob(p, recursive=True)
+
+    return files
 
 
 if __name__ == "__main__":
