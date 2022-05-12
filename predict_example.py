@@ -396,7 +396,7 @@ def crop_object(pcd, bbox, path="crop.ply"):
     return pcd
 
 
-def crop_result(confident_nms_obbs=None):
+def crop_result(confident_nms_obbs=None, np_save_folder="selected_bbox"):
     pcd = get_pcd(to_np=False, remove_ground=True)
     if confident_nms_obbs is None:
         # for viz only
@@ -411,7 +411,13 @@ def crop_result(confident_nms_obbs=None):
     else:
         # for shape net, to numpy array
         bboxes = get_3d_bbox(confident_nms_obbs)
-        sub_pcds = [np.asarray(o3d.geometry.PointCloud.crop(pcd, bbox)) for bbox in bboxes]
+        sub_pcds = []
+        if not os.path.exists(np_save_folder):
+            os.mkdir(np_save_folder)	
+        for i, bbox in enumerate(bboxes):
+        	   sub_pcd = np.asarray(o3d.geometry.PointCloud.crop(pcd, bbox))
+        	   np.save(os.path.join(np_save_folder, "{:03d}.npy".format(i)), sub_pcd)
+            sub_pcds.append(sub_pcd)
         return sub_pcds
         
 
