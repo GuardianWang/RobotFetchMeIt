@@ -661,6 +661,19 @@ def get_time_str(fmt="%y-%m-%d-%H-%M-%S"):
     return current_time
 
 
+def wait_shape_result(folder, filename="result.txt"):
+	 f_path = os.path.join(folder, filename)
+	 while True:
+        if os.path.exists(f_path):
+            break
+        time.sleep(0.1)
+	 with open(f_path, 'r') as f:
+        lines = list(map(lambda x: int(x.strip()), f.readlines()))  # 1: True, 0: False
+    lines = np.array(lines, dtype=bool)
+    return lines
+	 	 
+
+
 def detect_and_go(wait_for_result=True):
     net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
