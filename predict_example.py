@@ -416,12 +416,11 @@ def crop_result(confident_nms_obbs=None, np_save_folder="selected_bbox", npy_fmt
         if not os.path.exists(np_save_folder):
             os.mkdir(np_save_folder)	
         for i, bbox in enumerate(bboxes):
-        	   sub_pcd = np.asarray(o3d.geometry.PointCloud.crop(pcd, bbox))
-        	   np.save(os.path.join(np_save_folder, npy_fmt.format(i)), sub_pcd)
+            sub_pcd = np.asarray(o3d.geometry.PointCloud.crop(pcd, bbox))
+            np.save(os.path.join(np_save_folder, npy_fmt.format(i)), sub_pcd)
             sub_pcds.append(sub_pcd)
         return sub_pcds
         
-
 
 def move_robot(robot, robot_state_client, robot_command_client, config,
                pos_vision, rot_vision, is_start=True, is_end=True, rotate_before_move=False):
