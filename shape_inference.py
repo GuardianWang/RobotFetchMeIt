@@ -73,7 +73,7 @@ if __name__ == "__main__":
     while True:
         print("monitoring bbox folder")
         selected_bbox_folder = monitor_bbox_folder()
-        print("waiting bbox folder")
+        print("waiting bbox folder {}".format(selected_bbox_folder))
         n_bbox = wait_until_can_read(selected_bbox_folder)
         print("got {} bboxes".format(n_bbox))
         pred_shape(selected_bbox_folder, shape_model, partial_scans)
