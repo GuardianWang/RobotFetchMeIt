@@ -695,10 +695,13 @@ def detect_and_go(wait_for_result=True, use_text=True):
             else:
                 if use_text:
                     selected_bbox_folder = "selected_bbox_" + get_time_str()
+                    print("write folder {} into txt".format(selected_bbox_folder))
                     with open("selected_bbox_folder_path.txt", "w") as f:
                         f.write(selected_bbox_folder)
                     crop_result(confident_nms_obbs=confident_nms_obbs, np_save_folder=selected_bbox_folder)
+                    print("bbox written to folder {}".format(selected_bbox_folder))
                     selected = wait_shape_result(folder=selected_bbox_folder)
+                    print("got selected indices")
                 else:
                     selected = np.full(confident_nms_obbs.shape[0], True)
                 if not np.any(selected):
