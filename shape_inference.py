@@ -24,6 +24,8 @@ def monitor_bbox_folder(txt_path="selected_bbox_folder_path.txt", result_file="r
             result_path = os.path.join(line, result_file)
             if os.path.exists(result_path):
                 continue
+        else:
+            continue
         break
     return line
         
