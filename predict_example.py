@@ -3,6 +3,7 @@ import numpy as np
 import math
 import torch
 import os
+import glob
 from copy import deepcopy
 import sys
 import argparse
@@ -662,14 +663,17 @@ def get_time_str(fmt="%y-%m-%d-%H-%M-%S"):
 
 def wait_shape_result(folder, filename="result.txt"):
     f_path = os.path.join(folder, filename)
+    n = len(glob.glob(os.path.join(folder, "*.npy")))
     while True:
         if os.path.exists(f_path):
-            break
+            with open(f_path, 'r') as f:
+                line = f.readline().strip()  # 1: True, 0: False
+            if len(line) == n:
+                break
         time.sleep(0.1)
-    with open(f_path, 'r') as f:
-        lines = list(map(lambda x: int(x), f.readline().strip()))  # 1: True, 0: False
-    lines = np.array(lines, dtype=bool)
-    return lines
+    line = list(map(int, line))  # 1: True, 0: False
+    line = np.array(line, dtype=bool)
+    return line
 
 
 def detect_and_go(wait_for_result=True, use_text=True):
