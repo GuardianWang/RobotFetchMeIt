@@ -414,7 +414,7 @@ def crop_result(confident_nms_obbs=None, np_save_folder="selected_bbox", npy_fmt
         return pcd
     else:
         # for shape net, to numpy array
-        bboxes = get_3d_bbox(confident_nms_obbs)
+        bboxes = get_3d_bbox(confident_nms_obbs, top_k=confident_nms_obbs.shape[0])
         sub_pcds = []
         if not os.path.exists(np_save_folder):
             os.mkdir(np_save_folder)	
