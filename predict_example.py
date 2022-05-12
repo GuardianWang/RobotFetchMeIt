@@ -673,7 +673,6 @@ def wait_shape_result(folder, filename="result.txt"):
     return lines
 	 	 
 
-
 def detect_and_go(wait_for_result=True, use_text=True):
     net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
