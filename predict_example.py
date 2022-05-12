@@ -396,16 +396,24 @@ def crop_object(pcd, bbox, path="crop.ply"):
     return pcd
 
 
-def crop_result():
+def crop_result(confident_nms_obbs=None):
     pcd = get_pcd(to_np=False, remove_ground=True)
-    confident_nms_obbs, classes, objectness_prob = parse_result()
-    if not classes:
-        print("no result")
-        return
-    cls = classes[0]
-    bbox = get_3d_bbox(confident_nms_obbs)[0]
-    pcd = crop_object(pcd, bbox, cls + ".ply")
-    return pcd
+    if confident_nms_obbs is None:
+        # for viz only
+        confident_nms_obbs, classes, objectness_prob = parse_result()
+        if not classes:
+            print("no result")
+            return
+        cls = classes[0]
+        bbox = get_3d_bbox(confident_nms_obbs)[0]
+        pcd = crop_object(pcd, bbox, cls + ".ply")
+        return pcd
+    else:
+        # for shape net, to numpy array
+        bboxes = get_3d_bbox(confident_nms_obbs)
+        sub_pcds = [np.asarray(o3d.geometry.PointCloud.crop(pcd, bbox)) for bbox in bboxes]
+        return sub_pcds
+        
 
 
 def move_robot(robot, robot_state_client, robot_command_client, config,
