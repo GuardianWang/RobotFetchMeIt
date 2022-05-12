@@ -1,4 +1,4 @@
 clean:
-	rm -rf selected_bbox_*
+	rm -rf selected_bbox/*
 
 .PHONY: clean
