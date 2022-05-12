@@ -670,7 +670,7 @@ def wait_shape_result(folder, filename="result.txt"):
         lines = list(map(lambda x: int(x), f.readline().strip()))  # 1: True, 0: False
     lines = np.array(lines, dtype=bool)
     return lines
-	 	 
+
 
 def detect_and_go(wait_for_result=True, use_text=True):
     net = get_model().to(device)
