@@ -9,6 +9,7 @@ import argparse
 import importlib
 import warnings
 import time
+from datetime import datetime
 import cv2
 from scipy import ndimage
 
@@ -654,6 +655,12 @@ def bbox_selection_prompt(confident_nms_obbs, classes, objectness_prob, state):
     return pos_visions[i]
 
 
+def get_time_str(fmt="%y-%m-%d-%H-%M-%S"):
+    now = datetime.now()
+    current_time = now.strftime(fmt)
+    return current_time
+
+
 def detect_and_go(wait_for_result=True):
     net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
@@ -674,6 +681,8 @@ def detect_and_go(wait_for_result=True):
                 if wait_for_result:
                     continue
             else:
+            	 selected_bbox_folder = "selected_bbox_" + get_time_str()
+            	 crop_result(confident_nms_obbs=confident_nms_obbs, np_save_folder=selected_bbox_folder)
                 pos_vision = bbox_selection_prompt(confident_nms_obbs, classes, objectness_prob, state)
                 rot_vision = (0, 0, 0)
                 k = input("move to {}, press y to move, press d to dock, "
