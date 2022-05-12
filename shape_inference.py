@@ -41,10 +41,15 @@ def wait_until_can_read(selected_bbox_folder):
     return curr
 
 
-def pred_shape(selected_bbox_folder, model, partial_scans, latent_folder="TextCondRobotFetch/embeddings", latent_fmt="shape_{:04d}.npy",
+def pred_shape(selected_bbox_folder, model, partial_scans, latent_folder="TextCondRobotFetch/embeddings",
+               latent_fmt="shape_{:04d}.npy",
                latent_id=0, result_file="result.txt", npy_fmt="{:03d}.npy"):
+    txt_fmt = latent_fmt.replace("shape", "text").replace("npy", "txt")
     result_file_path = os.path.join(selected_bbox_folder, result_file)
     latent_path = os.path.join(latent_folder, latent_fmt.format(latent_id))
+    text_path = os.path.join(latent_folder, txt_fmt.format(latent_id))
+    with open(text_path, 'r') as f:
+        print("text content of id {}: {}".format(latent_id, f.readline()))
     n = len(os.listdir(selected_bbox_folder))
     latent = np.load(latent_path)
     preds = []
@@ -52,7 +57,7 @@ def pred_shape(selected_bbox_folder, model, partial_scans, latent_folder="TextCo
         for i in range(n):
             pcd_path = os.path.join(selected_bbox_folder, npy_fmt.format(i))
             pcd = np.load(pcd_path)
-            res = inference(pcd, latent, model, FLAGS, sample(partial_scans, 2))
+            res = inference(pcd, latent, model, FLAGS, partial_scans)
             preds.append(res)
             f.write('1' if res else '0')
     return preds
@@ -76,5 +81,5 @@ if __name__ == "__main__":
         print("waiting bbox folder {}".format(selected_bbox_folder))
         n_bbox = wait_until_can_read(selected_bbox_folder)
         print("got {} bboxes".format(n_bbox))
-        pred_shape(selected_bbox_folder, shape_model, partial_scans)
+        pred_shape(selected_bbox_folder, shape_model, partial_scans, latent_id=21)
     pass
