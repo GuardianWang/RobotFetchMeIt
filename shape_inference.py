@@ -57,6 +57,7 @@ def pred_shape(selected_bbox_folder, model, latent_folder="TextCondRobotFetch/em
 
 
 if __name__ == "__main__":
+    print("loading shape model")
     shape_model = get_text_model(FLAGS)
     print("monitoring bbox folder")
     selected_bbox_folder = monitor_bbox_folder()
