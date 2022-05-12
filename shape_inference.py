@@ -70,10 +70,11 @@ if __name__ == "__main__":
     shape_model = get_text_model(FLAGS)
     print("scanning partial point clouds")
     partial_scans = get_partial_scans()
-    print("monitoring bbox folder")
-    selected_bbox_folder = monitor_bbox_folder()
-    print("waiting bbox folder")
-    n_bbox = wait_until_can_read(selected_bbox_folder)
-    print("got {} bboxes".format(n_bbox))
-    pred_shape(selected_bbox_folder, shape_model, partial_scans)
+    while True:
+        print("monitoring bbox folder")
+        selected_bbox_folder = monitor_bbox_folder()
+        print("waiting bbox folder")
+        n_bbox = wait_until_can_read(selected_bbox_folder)
+        print("got {} bboxes".format(n_bbox))
+        pred_shape(selected_bbox_folder, shape_model, partial_scans)
     pass
