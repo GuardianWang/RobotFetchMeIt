@@ -662,12 +662,12 @@ def get_time_str(fmt="%y-%m-%d-%H-%M-%S"):
 
 
 def wait_shape_result(folder, filename="result.txt"):
-	 f_path = os.path.join(folder, filename)
-	 while True:
+    f_path = os.path.join(folder, filename)
+    while True:
         if os.path.exists(f_path):
             break
         time.sleep(0.1)
-	 with open(f_path, 'r') as f:
+    with open(f_path, 'r') as f:
         lines = list(map(lambda x: int(x), f.readline().strip()))  # 1: True, 0: False
     lines = np.array(lines, dtype=bool)
     return lines
@@ -694,20 +694,20 @@ def detect_and_go(wait_for_result=True, use_text=True):
                     continue
             
             else:
-            	 if use_text:
+                if use_text:
                     selected_bbox_folder = "selected_bbox_" + get_time_str()
                     with open("selected_bbox_folder_path.txt", "w") as f:
                         f.write(selected_bbox_folder)
                     crop_result(confident_nms_obbs=confident_nms_obbs, np_save_folder=selected_bbox_folder)
                     selected = wait_shape_result(folder=selected_bbox_folder)
                 else:
-                	  selected = np.full(confident_nms_obbs.shape[0], True)
-            	 if not np.any(selected):
+                    selected = np.full(confident_nms_obbs.shape[0], True)
+                if not np.any(selected):
                     print("no match")
                     if wait_for_result:
                         continue
                 else:
-                	  classes = [x for i, x in enumerate(classes) if selected[i]]
+                    classes = [x for i, x in enumerate(classes) if selected[i]]
                     pos_vision = bbox_selection_prompt(confident_nms_obbs[selected], classes, objectness_prob[selected], state)
                     rot_vision = (0, 0, 0)
                     k = input("move to {}, press y to move, press d to dock, "
