@@ -19,7 +19,7 @@ def monitor_bbox_folder(txt_path="selected_bbox_folder_path.txt", result_file="r
     while True:
         time.sleep(0.1)
         if os.path.exists(txt_path):
-            with open(txt_path, "w") as f:
+            with open(txt_path, "r") as f:
                 line = f.read().strip()
             result_path = os.path.join(line, result_file)
             if os.path.exists(result_path):
