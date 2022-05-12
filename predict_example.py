@@ -397,7 +397,7 @@ def crop_object(pcd, bbox, path="crop.ply"):
     return pcd
 
 
-def crop_result(confident_nms_obbs=None, np_save_folder="selected_bbox"):
+def crop_result(confident_nms_obbs=None, np_save_folder="selected_bbox", npy_fmt="{:03d}.npy"):
     pcd = get_pcd(to_np=False, remove_ground=True)
     if confident_nms_obbs is None:
         # for viz only
@@ -417,7 +417,7 @@ def crop_result(confident_nms_obbs=None, np_save_folder="selected_bbox"):
             os.mkdir(np_save_folder)	
         for i, bbox in enumerate(bboxes):
         	   sub_pcd = np.asarray(o3d.geometry.PointCloud.crop(pcd, bbox))
-        	   np.save(os.path.join(np_save_folder, "{:03d}.npy".format(i)), sub_pcd)
+        	   np.save(os.path.join(np_save_folder, npy_fmt.format(i)), sub_pcd)
             sub_pcds.append(sub_pcd)
         return sub_pcds
         
@@ -668,7 +668,7 @@ def wait_shape_result(folder, filename="result.txt"):
             break
         time.sleep(0.1)
 	 with open(f_path, 'r') as f:
-        lines = list(map(lambda x: int(x.strip()), f.readlines()))  # 1: True, 0: False
+        lines = list(map(lambda x: int(x), f.readline().strip()))  # 1: True, 0: False
     lines = np.array(lines, dtype=bool)
     return lines
 	 	 
