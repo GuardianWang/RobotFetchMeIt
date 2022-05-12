@@ -357,6 +357,8 @@ def parse_result(result_path="pred.npz"):
 
 def get_3d_bbox(bboxes_3d, top_k=1):
     o3d_bboxes = []
+    if top_k is None:
+        top_k = bboxes_3d.shape[0]
     for bbox_3d in bboxes_3d[:top_k]:
         # https://github.com/isl-org/Open3D/issues/2
         # text viz
