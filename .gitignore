@@ -13,3 +13,4 @@ log
 /pred.npz
 /*.ply
 /robot_image
+/selected_bbox_*
