@@ -416,7 +416,7 @@ def crop_result(confident_nms_obbs=None, np_save_folder="selected_bbox", npy_fmt
         if not os.path.exists(np_save_folder):
             os.mkdir(np_save_folder)	
         for i, bbox in enumerate(bboxes):
-            sub_pcd = np.asarray(o3d.geometry.PointCloud.crop(pcd, bbox))
+            sub_pcd = np.asarray(o3d.geometry.PointCloud.crop(pcd, bbox).points)
             np.save(os.path.join(np_save_folder, npy_fmt.format(i)), sub_pcd)
             sub_pcds.append(sub_pcd)
         return sub_pcds
