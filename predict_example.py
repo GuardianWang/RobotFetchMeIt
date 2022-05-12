@@ -674,7 +674,7 @@ def wait_shape_result(folder, filename="result.txt"):
 	 	 
 
 
-def detect_and_go(wait_for_result=True):
+def detect_and_go(wait_for_result=True, use_text=True):
     net = get_model().to(device)
     robot, robot_state_client, robot_command_client, lease_client = init_robot(FLAGS)
     image_client = init_image_capture(FLAGS)
@@ -695,9 +695,12 @@ def detect_and_go(wait_for_result=True):
                     continue
             
             else:
-            	 selected_bbox_folder = "selected_bbox_" + get_time_str()
-            	 crop_result(confident_nms_obbs=confident_nms_obbs, np_save_folder=selected_bbox_folder)
-            	 selected = wait_shape_result(folder=selected_bbox_folder)
+            	 if use_text:
+                    selected_bbox_folder = "selected_bbox_" + get_time_str()
+                    crop_result(confident_nms_obbs=confident_nms_obbs, np_save_folder=selected_bbox_folder)
+                    selected = wait_shape_result(folder=selected_bbox_folder)
+                else:
+                	  selected = np.full(confident_nms_obbs.shape[0], True)
             	 if not np.any(selected):
                     print("no match")
                     if wait_for_result:
