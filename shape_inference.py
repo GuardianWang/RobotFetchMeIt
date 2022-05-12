@@ -32,8 +32,8 @@ def monitor_bbox_folder(txt_path="selected_bbox_folder_path.txt", result_file="r
         
 def wait_until_can_read(selected_bbox_folder):
     prev = 0
-    curr = len(os.listdir(selected_bbox_folder))
-    while curr != 0 and prev != curr:
+    curr = 0
+    while curr == 0 or prev != curr:
         time.sleep(1)
         prev, curr = curr, len(os.listdir(selected_bbox_folder))
     return curr
