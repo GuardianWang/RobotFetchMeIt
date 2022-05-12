@@ -26,7 +26,21 @@ def monitor_bbox_folder(txt_path="selected_bbox_folder_path.txt", result_file="r
         break
     return line
         
+        
+def wait_until_can_read(selected_bbox_folder):
+	 prev = 0
+	 curr = len(os.listdir(selected_bbox_folder))
+    while curr != 0 and prev != curr:
+    	 time.sleep(1)
+    	 prev, curr = curr, len(os.listdir(selected_bbox_folder))
+    return curr
+	
+	
 if __name__ == "__main__":
     shape_model = get_text_model(FLAGS)
-    monitor_bbox_folder()
+    print("monitoring bbox folder")
+    selected_bbox_folder = monitor_bbox_folder()
+    print("waiting bbox folder")
+    n_bbox = wait_until_can_read(selected_bbox_folder)
+    print("got {} bboxes".format(n_bbox))
     pass
