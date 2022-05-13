@@ -81,5 +81,5 @@ if __name__ == "__main__":
         print("waiting bbox folder {}".format(selected_bbox_folder))
         n_bbox = wait_until_can_read(selected_bbox_folder)
         print("got {} bboxes".format(n_bbox))
-        pred_shape(selected_bbox_folder, shape_model, partial_scans, latent_id=21)
+        pred_shape(selected_bbox_folder, shape_model, partial_scans, latent_id=32)
     pass

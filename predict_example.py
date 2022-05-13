@@ -747,5 +747,5 @@ if __name__ == "__main__":
     # viz_result(top_k=2)
     # viz_full_pcd()
     # crop_result()
-    # detect_and_go()
+    detect_and_go()
     pass
