@@ -79,61 +79,11 @@ cd ..
     mv checkpoint.pth TextCondRobotFetch
     ``` 
 
-## Data
-Please follow the steps listed [here](https://github.com/facebookresearch/votenet/blob/master/sunrgbd/README.md) to set up the SUN RGB-D dataset in the `sunrgbd` folder. 
-To prevent a bug in MATLAB, we need to 
-change line 10 in `OFFICIAL_SUNRGBD/SUNRGBDtoolbox/readData/read_3d_pts_general.m` to
-```
-rgb = double(im) / 255;
-```
+## Running the demo
 
-The expected dataset structure under `sunrgbd` is:
-```
-sunrgbd/
-  sunrgbd_pc_bbox_votes_50k_{v1,v2}_{train,val}/
-  sunrgbd_trainval/
-    # raw image data and camera used by ImVoteNet
-    calib/*.txt
-    image/*.jpg
-```
-For ImVoteNet, we provide 2D detection results from a pre-trained Faster R-CNN detector [here](https://dl.fbaipublicfiles.com/imvotenet/2d_bbox/sunrgbd_2d_bbox_50k_v1.tgz). Please download the file, uncompress it, and place the resulting folders (`sunrgbd_2d_bbox_50k_v1_{train,val}`) under `sunrgbd` as well.
+## Train the detector yourself
 
-## Training and Evaluation
-
-To submit a task in grid, cd into `imvotenet` and run 
-```
-psub runme
-```
-Note that the GPU we specify matches the arch when compiling PointNet++.
-
-Once the code and data are set up, one can train ImVoteNet by the following command:
-```bash
-CUDA_VISIBLE_DEVICES=0 python train.py --use_imvotenet --log_dir log_imvotenet
-```
-The setting `CUDA_VISIBLE_DEVICES=0` forces the model to be trained on a single GPU (GPU `0` in this case). With the default batch size of 8, it takes about 7G memory during training. 
-
-To reproduce the experimental results in the paper and in general have faster development cycles, one can use a shorter learning schedule: 
-```bash
-CUDA_VISIBLE_DEVICES=1 python train.py --use_imvotenet --log_dir log_140ep --max_epoch 140 --lr_decay_steps 80,120 --lr_decay_rates 0.1,0.1
-```
-
-As a baseline, this code also supports training of the original VoteNet, which is launched by:
-```bash
-CUDA_VISIBLE_DEVICES=2 python train.py --log_dir log_votenet
-```
-In fact, the code is based on the VoteNet repository at commit [2f6d6d3](https://github.com/facebookresearch/votenet/tree/2f6d6d3), as a reference, it gives around 58 mAP@0.25.
-
-For other training options, one can use `python train.py -h` for assistance.
-
-After the model is trained, the checkpoint can be tested and evaluated on the `val` set via:
-```bash
-python eval.py --use_imvotenet --checkpoint_path log_imvotenet/checkpoint.tar --dump_dir eval_imvotenet --cluster_sampling seed_fps --use_3d_nms --use_cls_nms --per_class_proposal
-```
-For reference, ImVoteNet gives around 63 mAP@0.25.
-
-## TODO
-- Add docs for some functions
-- Investigate the 0.5 mAP@0.25 gap after moving to PyTorch 1.4.0. (Originally the code is based on PyTorch 1.0.)
+Read [imvotenet](https://github.com/facebookresearch/imvotenet) to see how to train the detector.
 
 ## LICENSE
 
