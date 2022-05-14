@@ -120,3 +120,8 @@ Read [imvotenet](https://github.com/facebookresearch/imvotenet) to see how to tr
 # LICENSE
 
 The code is released under the [MIT license](LICENSE).
+
+# TODO
+
+- [] subdataset
+- [] zip shared by Rao
