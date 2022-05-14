@@ -79,7 +79,7 @@ cd ..
     mv checkpoint.pth TextCondRobotFetch
     ``` 
 
-## Running the demo
+## Run the demo
 
 In terminal1, run
 ```bash
@@ -93,7 +93,10 @@ In terminal2, run
 ```bash
 conda activate fetch
 export ROBOT_IP=<your spot ip>
-python predict_example.py --checkpoint_path checkpoint.tar --dump_dir pred_votenet --cluster_sampling seed_fps --use_3d_nms --use_cls_nms --per_class_proposal --time_per_move=5 $ROBOT_IP
+export BOSDYN_CLIENT_USERNAME=<spot username>
+export BOSDYN_CLIENT_PASSWORD=<spot password>
+export BOSDYN_DOCK_ID=<spot dock id>
+python predict_example.py --checkpoint_path checkpoint.tar --dump_dir pred_votenet --cluster_sampling seed_fps --use_3d_nms --use_cls_nms --per_class_proposal --time_per_move=5 --username $BOSDYN_CLIENT_USERNAME --password $BOSDYN_CLIENT_PASSWORD --dock_id $BOSDYN_DOCK_ID  $ROBOT_IP
 ```
 
 In terminal3, run
