@@ -81,6 +81,28 @@ cd ..
 
 ## Running the demo
 
+In terminal1, run
+```bash
+conda activate fetch
+export ROBOT_IP=<your spot ip>
+python estop_nogui.py $ROBOT_IP
+```
+You can force stop the spot by pressing `<space>`
+
+In terminal2, run
+```bash
+conda activate fetch
+export ROBOT_IP=<your spot ip>
+python predict_example.py --checkpoint_path checkpoint.tar --dump_dir pred_votenet --cluster_sampling seed_fps --use_3d_nms --use_cls_nms --per_class_proposal --time_per_move=5 $ROBOT_IP
+```
+
+In terminal3, run
+```bash
+conda activate torch18
+export ROBOT_IP=<your spot ip>
+python shape_inference.py --checkpoint TextCondRobotFetch/checkpoint.pth
+```
+
 ## Train the detector yourself
 
 Read [imvotenet](https://github.com/facebookresearch/imvotenet) to see how to train the detector.
