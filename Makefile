@@ -1,4 +1,7 @@
 clean:
 	rm -rf selected_bbox/*
 
-.PHONY: clean
+requirement:
+	pipreqs --ignore spot-sdk,TextCondRobotFetch --force --mode no-pin .
+
+.PHONY: clean requirement
