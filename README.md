@@ -4,6 +4,8 @@ Brown university [CSCI 2952-O](http://cs.brown.edu/courses/csci2952o/) final pro
 Given a depth map and a text description, we use [Spot](https://www.bostondynamics.com/products/spot)
 to detect the object that matches the description in the scene and walk to it.
 
+This repo is based on [imvotenet](https://github.com/facebookresearch/imvotenet).
+
 # Group members
 
 - [Zichuan Wang](https://github.com/GuardianWang)
@@ -11,7 +13,18 @@ to detect the object that matches the description in the scene and walk to it.
 - [Rao Fu](https://github.com/FreddieRao)
 - [Xinyu Liu](https://github.com/jasonxyliu)
 
-This repo is based on [imvotenet](https://github.com/facebookresearch/imvotenet).
+# Demo
+
+- Demo only with 3D object detector [video](https://youtu.be/LdnsRqQYvwg)
+
+<iframe
+    width="640"
+    height="480"
+    src="https://www.youtube.com/embed/LdnsRqQYvwg"
+    frameborder="0"
+    allow="autoplay; encrypted-media"
+    allowfullscreen>
+</iframe>
 
 # Resources
 
