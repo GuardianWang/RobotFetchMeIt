@@ -1,4 +1,22 @@
-# ImVoteNet
+# RobotFetchMeIt
+Brown university [CSCI 2952-O](http://cs.brown.edu/courses/csci2952o/) final project.
+
+Given a depth map and a text description, we use [Spot](https://www.bostondynamics.com/products/spot)
+to detect the object that matches the description in the scene and walk to it.
+
+# Group members
+
+- [Zichuan Wang](https://github.com/GuardianWang)
+- [Yiwen Chen](https://github.com/yiwenchen1999/)
+- [Rao Fu](https://github.com/FreddieRao)
+- [Xinyu Liu](https://github.com/jasonxyliu)
+
+This repo is based on [imvotenet](https://github.com/facebookresearch/imvotenet).
+
+# Resources
+
+[spot-sdk](https://github.com/jasonxyliu/spot-sdk)
+
 **Boosting 3D Object Detection in Point Clouds with Image Votes**
 
 **Note:**
