@@ -1,0 +1,12 @@
+bosdyn_choreography_protos
+matplotlib
+numpy
+open3d
+opencv_python
+plyfile
+scipy
+setuptools
+tensorboardX
+torch
+tqdm
+trimesh
