@@ -83,7 +83,7 @@ cd ..
     mv checkpoint.pth TextCondRobotFetch
     ``` 
 
-## Run the demo
+# Run the demo
 
 In terminal1, run
 ```bash
@@ -110,10 +110,10 @@ export ROBOT_IP=<your spot ip>
 python shape_inference.py --checkpoint TextCondRobotFetch/checkpoint.pth
 ```
 
-## Train the detector yourself
+# Train the detector yourself
 
 Read [imvotenet](https://github.com/facebookresearch/imvotenet) to see how to train the detector.
 
-## LICENSE
+# LICENSE
 
 The code is released under the [MIT license](LICENSE).
