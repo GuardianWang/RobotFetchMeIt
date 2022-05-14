@@ -1,6 +1,3 @@
-[submodule "sunrgbd-toy"]
-	path = sunrgbd-toy
-	url = https://github.com/GuardianWang/sunrgbd-toy.git
 [submodule "spot-sdk"]
 	path = spot-sdk
 	url = https://github.com/jasonxyliu/spot-sdk.git
