@@ -70,6 +70,15 @@ TORCH_CUDA_ARCH_LIST="7.5" python setup.py install
 cd ..
 ```
 
+# Model weights
+
+- VoteNet weights (12 MB): checkpoint.tar
+- Text model weights (1.4 GB): 
+    ```bash
+    bash download.sh 
+    mv checkpoint.pth TextCondRobotFetch
+    ``` 
+
 ## Data
 Please follow the steps listed [here](https://github.com/facebookresearch/votenet/blob/master/sunrgbd/README.md) to set up the SUN RGB-D dataset in the `sunrgbd` folder. 
 To prevent a bug in MATLAB, we need to 
