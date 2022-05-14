@@ -15,16 +15,9 @@ This repo is based on [imvotenet](https://github.com/facebookresearch/imvotenet)
 
 # Demo
 
-- Demo only with 3D object detector [video](https://youtu.be/LdnsRqQYvwg)
+- Demo only with 3D object detector
 
-<iframe
-    width="640"
-    height="480"
-    src="https://www.youtube.com/embed/LdnsRqQYvwg"
-    frameborder="0"
-    allow="autoplay; encrypted-media"
-    allowfullscreen>
-</iframe>
+[![](https://img.youtube.com/vi/LdnsRqQYvwg/0.jpg)](https://youtu.be/LdnsRqQYvwg)
 
 # Resources
 
