@@ -74,7 +74,7 @@ TORCH_CUDA_ARCH_LIST="7.5" python setup.py install
 cd ..
 ```
 
-# Model weights
+# Model weights and data
 
 - VoteNet weights (12 MB): checkpoint.tar
 - Text model weights (1.4 GB): 
@@ -109,6 +109,9 @@ conda activate torch18
 export ROBOT_IP=<your spot ip>
 python shape_inference.py --checkpoint TextCondRobotFetch/checkpoint.pth
 ```
+You can specify the text and corresponding pre-extracted features by changing `latent_id` parameter passed to `pred_shape()`
+in `shape_inference.py`. 
+Texts and features are stored in `TextCondRobotFetch/embeddings`
 
 # Train the detector yourself
 
