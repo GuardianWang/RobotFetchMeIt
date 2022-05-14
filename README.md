@@ -21,7 +21,7 @@ This repo is based on [imvotenet](https://github.com/facebookresearch/imvotenet)
 
 # Resources
 
-[spot-sdk](https://github.com/jasonxyliu/spot-sdk)
+- [spot-sdk](https://github.com/jasonxyliu/spot-sdk) for Spot API
 
 # Installation
 
