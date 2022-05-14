@@ -50,9 +50,9 @@ Find how to let nvcc detect a specific cuda version [here](https://stackoverflow
 ```bash
 conda activate fetch
 conda install pytorch==1.4.0 torchvision==0.5.0 cudatoolkit=9.2 cudnn=7.6.5 -c pytorch
-pip install matplotlib opencv-python plyfile tqdm networkx==2.2 trimesh==2.35.39
-pip install protobuf
+pip install matplotlib opencv-python plyfile tqdm networkx==2.2 trimesh==2.35.39 protobuf
 pip install open3d
+pip install bosdyn-client bosdyn-mission bosdyn-choreography-client
 
 conda activate torch18
 conda install pytorch==1.8.0 torchvision==0.9.0 cudatoolkit=10.2 cudnn=7.6.5 -c pytorch
