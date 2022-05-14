@@ -64,9 +64,9 @@ parser.add_argument('--conf_thresh', type=float, default=0.05, help='Filter out 
 parser.add_argument('--faster_eval', action='store_true', help='Faster evaluation by skippling empty bounding box removal.')
 parser.add_argument('--shuffle_dataset', action='store_true', help='Shuffle the dataset (random order).')
 # robot
-parser.add_argument("--username", type=str, default="user", help="Username of Spot")
-parser.add_argument("--password", type=str, default="97qp5bwpwf2c", help="Password of Spot")  # dungnydsc8su
-parser.add_argument("--dock_id", type=int, default="521", help="Docking station ID to dock at")
+parser.add_argument("--username", type=str, help="Username of Spot")
+parser.add_argument("--password", type=str, help="Password of Spot")  # dungnydsc8su
+parser.add_argument("--dock_id", type=int, help="Docking station ID to dock at")
 parser.add_argument("--time_per_move", type=int, default=10, help="Seconds each move in grid should take")
 parser.add_argument('--image-service', help='Name of the image service to query.',
                     default=ImageClient.default_service_name)
