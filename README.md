@@ -23,57 +23,48 @@ This repo is based on [imvotenet](https://github.com/facebookresearch/imvotenet)
 
 [spot-sdk](https://github.com/jasonxyliu/spot-sdk)
 
-**Boosting 3D Object Detection in Point Clouds with Image Votes**
+# Installation
 
-**Note:**
-The modified instruction is to match the environment of CS department at Brown University.
-
-<p align="center">
-  <img src="http://xinleic.xyz/images/imvote.png" width="600" />
-</p>
-
-This repository contains the code release of the [paper](https://arxiv.org/abs/2001.10692):
+Clone this repository and submodules:
+```bash
+git clone https://github.com/GuardianWang/imvotenet.git RobotFetchMeIt
+cd RobotFetchMeIt
+git submodule init
 ```
-@inproceedings{qi2020imvotenet,
-  title={Imvotenet: Boosting 3d object detection in point clouds with image votes},
-  author={Qi, Charles R and Chen, Xinlei and Litany, Or and Guibas, Leonidas J},
-  booktitle={IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year={2020}
-}
+We use conda to create a virtual environment.
+Because loading the weights of text model requires pytorch>=1.8 and compiling pointnet2 requires pytorch==1.4, we are
+using two conda environments.
+```bash
+conda create -n fetch python=3.7 -y
+conda create -n torch18 python=3.7 -y
 ```
-
-## Installation
-Overall, the installation is similar to [VoteNet](https://github.com/facebookresearch/votenet). GPU is required. The code is tested with Ubuntu 18.04, Python 3.7.7, PyTorch 1.4.0, CUDA 10.0 and cuDNN v7.4.
+Overall, the installation is similar to [VoteNet](https://github.com/facebookresearch/votenet). 
+GPU is required. The code is tested with Ubuntu 18.04, Python 3.7.13, PyTorch 1.4.0, CUDA 10.0, cuDNN v7.4, and NVIDIA GeForce RTX 2080.
 
 Before installing Pytorch, make sure the machine has GPU on it. Check by `nvidia-smi`. 
-When I ssh to the department machine, `cslab` machines has 2 GB GPU. 
 We need GPU to compile PointNet++.
-First install [PyTorch](https://pytorch.org/get-started/locally/), for example through [Anaconda](https://docs.anaconda.com/anaconda/install/):
+First install [PyTorch](https://pytorch.org/get-started/locally/), 
+for example through [Anaconda](https://docs.anaconda.com/anaconda/install/):
 Find cudatoolkit and cudnn version match [here](https://developer.nvidia.com/rdp/cudnn-archive).
 Find how to let nvcc detect a specific cuda version [here](https://stackoverflow.com/questions/40517083/multiple-cuda-versions-on-machine-nvcc-v-confusion).
 ```bash
-conda install pytorch==1.4.0 torchvision==0.5.0 cudatoolkit=10.0 cudnn=7.6.4 -c pytorch
-```
-Next, install Python dependencies via `pip` ([tensorboardX](https://github.com/lanpa/tensorboardX) is used for for visualizations):
-```bash
+conda activate fetch
+conda install pytorch==1.4.0 torchvision==0.5.0 cudatoolkit=9.2 cudnn=7.6.5 -c pytorch
 pip install matplotlib opencv-python plyfile tqdm networkx==2.2 trimesh==2.35.39
-pip install tensorboardX --no-deps
-```
-Also install `protobuf`
-```
 pip install protobuf
+pip install open3d
+
+conda activate torch18
+conda install pytorch==1.8.0 torchvision==0.9.0 cudatoolkit=10.2 cudnn=7.6.5 -c pytorch
+pip install ordered-set
+pip install tqdm
+pip install pandas
 ```
-Now we are ready to clone this repository:
-```bash
-git clone git@github.com:facebookresearch/imvotenet.git
-cd imvotenet
-```
+
 The code depends on [PointNet++](http://arxiv.org/abs/1706.02413) as a backbone, which needs compilation.
-To train the model on [grid](https://cs.brown.edu/about/system/services/hpc/gridengine/), 
-we need to compile by the [arch](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) of GPU we want to use 
-([grid GPU list](https://cs.brown.edu/about/system/services/hpc/grid/)).
-For example, if I want to use Titan RTX under `gpu2001`, arch is 7.5.
+We need to compile by the [arch](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) of GPU we want to use.
 ```bash
+conda activate fetch
 cd pointnet2
 TORCH_CUDA_ARCH_LIST="7.5" python setup.py install
 cd ..
