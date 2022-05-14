@@ -13,6 +13,10 @@ This repo is based on [imvotenet](https://github.com/facebookresearch/imvotenet)
 - [Rao Fu](https://github.com/FreddieRao)
 - [Xinyu Liu](https://github.com/jasonxyliu)
 
+# Poster
+
+[![](sample-image/poster.png)](https://docs.google.com/presentation/d/11A7Xm7krHcazY0S4bGPxj3i_MgMvHVn-/edit?usp=sharing&ouid=106174437514196571374&rtpof=true&sd=true)
+
 # Demo
 
 - Demo only with 3D object detector
