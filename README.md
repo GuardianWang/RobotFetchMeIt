@@ -77,11 +77,13 @@ cd ..
 # Model weights and data
 
 - VoteNet weights (12 MB): checkpoint.tar
-- Text model weights (1.4 GB): 
-    ```bash
-    bash download.sh 
-    mv checkpoint.pth TextCondRobotFetch
-    ``` 
+- Text model weights (1.4 GB) 
+- Text features (500 MB)
+```bash
+bash download.sh 
+mv checkpoint.pth TextCondRobotFetch
+unzip subdataset.zip -d <path to unzip>
+```
 
 # Run the demo
 
@@ -110,8 +112,10 @@ export ROBOT_IP=<your spot ip>
 python shape_inference.py --checkpoint TextCondRobotFetch/checkpoint.pth
 ```
 You can specify the text and corresponding pre-extracted features by changing `latent_id` parameter passed to `pred_shape()`
-in `shape_inference.py`. 
+in `shape_inference.py::pred_shape`. 
 Texts and features are stored in `TextCondRobotFetch/embeddings`
+
+You can specify the path to subdataset in the `folder` parameter passed in `shape_inference.py::get_partial_scans`.
 
 # Train the detector yourself
 

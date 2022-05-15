@@ -4,5 +4,8 @@ gdrive_download () {
   rm -rf /tmp/cookies.txt
 }
 
+echo "Downloading text features"
+gdrive_download 1WPgFuQ4W4ejW5ttG6P0vsvGADfnmAp_U subdataset.zip
+
 echo "Downloading weight..."
 gdrive_download 1cEWTQo8jXz5krJ3clViH70rDFnR4-8Sh checkpoint.pth
