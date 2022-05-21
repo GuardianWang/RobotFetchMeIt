@@ -23,6 +23,10 @@ This repo is based on [imvotenet](https://github.com/facebookresearch/imvotenet)
 
 [![](https://img.youtube.com/vi/LdnsRqQYvwg/3.jpg)](https://youtu.be/LdnsRqQYvwg)
 
+# Report
+
+[report](RobotFetchMeIt.pdf)
+
 # Resources
 
 - [spot-sdk](https://github.com/jasonxyliu/spot-sdk) for Spot API
